@@ -20,6 +20,9 @@
   <!-- Fontawesome -->
   <link href="vendor/fontawesome/css/all.css" rel="stylesheet">
 
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+
 </head>
 
 <body>
@@ -62,49 +65,72 @@
   </header>
 
   <!-- fin imagen principal -->
-  <div class="container">
 
-    <!-- llamado -->
+  <!-- llamado -->
 
-    <section>
-      <h3>Título</h3>
-      <h5>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Maxime consectetur sit sunt fuga, delectus id omnis voluptate dignissimos ratione vero aliquam ea eum dolorum voluptas quidem perferendis, reiciendis excepturi et.Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quas expedita animi maxime voluptatum pariatur, in voluptates qui, voluptate ea accusamus nemo quo perferendis quasi molestias cumque quia sed aut earum!</h5>
-    </section>
+  <section class="bg-azul py-5">
+    <div class="container">
+      <h3 class="cl-blanco text-center display-3 bold">Título</h3>
+      <p class="cl-blanco text-center my-5 lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Maxime consectetur sit sunt fuga, delectus id omnis voluptate dignissimos ratione vero aliquam ea eum dolorum voluptas quidem perferendis, reiciendis excepturi et.Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quas expedita animi maxime voluptatum pariatur, in voluptates qui, voluptate ea accusamus nemo quo perferendis quasi molestias cumque quia sed aut earum! Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus ipsam perspiciatis veritatis maxime consequatur et eos pariatur accusantium voluptates, dolores tempore sunt quas repellendus suscipit iusto totam atque dolorum autem. 
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore aliquid eaque quasi sint cumque nam magnam accusamus excepturi beatae et officiis, adipisci debitis, omnis, aperiam deleniti obcaecati tempora labore. Recusandae.</p>
+    </div>
+  </section>
 
-    <!-- fin llamado -->
+  <!-- fin llamado -->
 
-    <!-- blog -->
+  <!-- blog -->
 
-    <section>
-      <h5>Blog</h5>
-      <div class="row">
-        <div class="col-md-4 cuadricula">
-          <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+  <section class="py-5">
+    <h2 class="cl-azul text-center display-4 bold mb-5">Blog</h2>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4 cuadricula">
+            <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+            </div>
+              <div class="row mt-3 titulo-blog">
+                <div class="col-md-3">
+                  <h5 class="cl-blanco text-center bold bg-rojo">fecha</h5>
+                </div>
+                <div class="col-md-9">
+                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
+                </div>
+              </div>
           </div>
-          <h5>fecha</h5>
-          <h3><a href="">Título de la noticia</a></h3>
-        </div>
-        <div class="col-md-4 cuadricula">
-          <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+          <div class="col-md-4 cuadricula">
+            <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+            </div>
+              <div class="row mt-3 titulo-blog">
+                <div class="col-md-3">
+                  <h5 class="cl-blanco text-center bold bg-rojo">fecha</h5>
+                </div>
+                <div class="col-md-9">
+                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
+                </div>
+              </div>
           </div>
-          <h5>fecha</h5>
-          <h3><a href="">Título de la noticia</a></h3>
-        </div>
-        <div class="col-md-4 cuadricula">
-          <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+          <div class="col-md-4 cuadricula">
+            <div class="inner-cuadricula" style="background-image:url('img/muestranoticia.jpg')">
+            </div>
+              <div class="row mt-3 titulo-blog">
+                <div class="col-md-3">
+                  <h5 class="cl-blanco text-center bold bg-rojo">fecha</h5>
+                </div>
+                <div class="col-md-9">
+                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
+                </div>
+              </div>
           </div>
-          <h5>fecha</h5>
-          <h3><a href="">Título de la noticia</a></h3>
-        </div>
+        </div>  
       </div>
-    </section>
+  </section>
 
-    <!-- fin blog -->
+  <!-- fin blog -->
 
-    <section>
-      <!-- formulario contacto -->
-      <h2 class="display-4 bold">Contacto</h2>
-      <p class="lead">Envianos un mensaje</p>
+  <!-- formulario contacto -->
+  <section class="bg-gris py-5">
+    <div class="container"> 
+      <h2 class="cl-blanco text-center display-4 bold mb-2">Contacto</h2>
+      <p class="cl-blanco text-center mb-5">Envianos un mensaje</p>
 
       <form class="form-horizontal" method="POST">
         <fieldset>
@@ -129,84 +155,82 @@
             <textarea class="form-control" id="textarea" name="textarea" placeholder="Mensaje"></textarea>
           </div>
 
-          <div class="form-group">
-            <input type="submit" class="btn">
+          <div class="form-group btn-azul text-center">
+            <input type="submit" class="btn bg-azul cl-blanco">
           </div>
         </fieldset>
       </form>
+    </div>
+  </section>
 
-    </section>
+  <!-- fin formulario contacto -->
 
-    <!-- fin formulario contacto -->
+  <!-- redes sociales -->
 
-    <!-- redes sociales -->
-
-    <section>
-      <div class="row">
-        <div class="col-12 text-center">
-          <a target="_blank" href="https://www.facebook.com/Freud1Delgado"><i class="fab fa-3x mx-2 fa-facebook-f"></i></a>
-          <a target="_blank" href="https://twitter.com/Freud1UBA"><i class="fab fa-3x mx-2 fa-twitter"></i></a>
-          <a target="_blank" href="https://www.instagram.com/psicoanalisisfreud1/"><i class="fab fa-3x mx-2 fa-instagram"></i></a>
-        </div>
+  <section class="my-3">
+    <div class="row">
+      <div class="col-12 text-center cl-azul">
+        <a class="cl-azul" target="_blank" href="https://www.facebook.com/Freud1Delgado"><i class="fab fa-3x mx-2 fa-facebook-f"></i></a>
+        <a class="cl-azul" target="_blank" href="https://twitter.com/Freud1UBA"><i class="fab fa-3x mx-2 fa-twitter"></i></a>
+        <a class="cl-azul" target="_blank" href="https://www.instagram.com/psicoanalisisfreud1/"><i class="fab fa-3x mx-2 fa-instagram"></i></a>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- fin redes sociales -->
+  <!-- fin redes sociales -->
 
-    <!-- footer -->
+  <!-- footer -->
 
-    <footer>
-
+  <footer class="bg-azul pt-5">
+    <div class="container">
       <div class="row">
         <div class="col-md-6">
-          <ul class="list-unstyled">
-            <li>Responsables Página Web</li>
+          <ul class="list-unstyled cl-blanco">
+            <li class="bold">Responsables Página Web</li>
             <li>Susi Epsztein y Verónica Wainszelbaum</li>
-            <li>Colaboran</li>
+            <li class="bold">Colaboran</li>
             <li>Federico Giachetti, Liliana Mariño, Celeste Silanes y Noelia Sabelli</li>
           </ul>
         </div>
         <div class="col-md-6">
-          <ul class="list-unstyled">
-            <li>Responsables Facebook y Twitter</li>
+          <ul class="list-unstyled cl-blanco">
+            <li class="bold">Responsables Facebook y Twitter</li>
             <li>Gerardo Battista</li>
-            <li>Colaboran</li>
+            <li class="bold">Colaboran</li>
             <li>Santiago Hormanstorfer, Julián Pilar y Gisela Contino</li>
           </ul>
         </div>
       </div>
 
-
       <!-- copyright -->
 
       <div class="row">
         <div class="col-md-6">
-          <ul class="list-unstyled">
+          <ul class="list-unstyled cl-blanco">
             <li>
-              <a href="">Desarrollado por</a>
+              <a class="cl-blanco" href="">Desarrollado por</a>
             </li>
           </ul>
         </div>
         <div class="col-md-6">
-          <ul class="list-unstyled">
+          <ul class="list-unstyled cl-blanco">
             <li>
               <p>© Cátedra de Psicoanálisis Freud 1 - 2018 - Todos los derechos reservados</p>
             </li>
           </ul>
         </div>
       </div>
+    </div>
+  </footer>
 
-    </footer>
+  <!-- fin copyright -->
 
-    <!-- fin copyright -->
+  <!-- fin footer -->
 
-    <!-- fin footer -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Bootstrap core JavaScript -->
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-  </div>
 </body>
 
 </html>

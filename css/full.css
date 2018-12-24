@@ -4,6 +4,10 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-full/blob/master/LICENSE)
  */
 
+ body {
+ font-family: 'Raleway', sans-serif;
+ }
+
 header {
   background: url('../img/home.jpg') no-repeat center center fixed;
   -webkit-background-size: cover;
@@ -13,7 +17,35 @@ header {
   height: 700px;
 }
 
-/* CUADRICULA */
+.cl-blanco {
+  color: white;
+}
+
+.cl-azul {
+  color: #6192a0;
+}
+
+.bg-azul {
+background-color: #6192a0
+}
+
+.bg-rojo {
+background-color: #c12332
+}
+
+.bg-gris {
+  background-color: #646464
+}
+
+.btn-azul {
+  color: #6192a0;
+}
+
+ .bold{
+  font-weight: bold;
+ }
+
+/* blog */
 
 .cuadricula {
   padding: 10px;
