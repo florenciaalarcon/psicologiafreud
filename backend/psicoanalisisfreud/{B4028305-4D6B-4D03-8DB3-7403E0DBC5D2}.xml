@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<configuration date="2017/03/14" author="e.World Technology Ltd.">
+  <project id="{B4028305-4D6B-4D03-8DB3-7403E0DBC5D2}" file="C:\wamp\www\github\psicologiafreud\pmp\psicoanalisisfreud.pmp" name="psicoanalisisfreud" product="PHPMaker" version="13.0" datetime="2017/03/14 04:31:35" languagefolder="phplang" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0">
+    <table id="archivos" name="archivos" caption="Archivos" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,111" priv="1" />
+    <table id="categorias_blog" name="categorias_blog" caption="Categorías Blog" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,111" priv="1" />
+    <table id="entradas_blog" name="entradas_blog" caption="Entradas de Blog" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,111" priv="1" />
+    <table id="_menu" name="menu" caption="Menú" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,72" priv="1" />
+    <table id="niveles" name="niveles" caption="niveles" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="paginas_estaticas" name="paginas_estaticas" caption="Páginas Estáticas" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,111" priv="1" />
+    <table id="permisos" name="permisos" caption="permisos" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="usuarios" name="usuarios" caption="Usuarios" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+  </project>
+</configuration>
