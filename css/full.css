@@ -1,0 +1,165 @@
+/*!
+ * Start Bootstrap - Full (https://startbootstrap.com/template-overviews/full)
+ * Copyright 2013-2017 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-full/blob/master/LICENSE)
+ */
+
+ body {
+ font-family: 'Raleway', sans-serif;
+ }
+
+header {
+  background: url('../img/home.jpg') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
+  -o-background-size: cover;
+  height: 800px;
+  background-position-y: 100px;
+}
+
+.cl-blanco {
+  color: white;
+}
+
+.cl-azul {
+  color: #6192a0;
+}
+
+.bg-celeste{
+  color: #84b3c2;
+}
+
+.bg-azul {
+  background-color: #6192a0
+}
+
+.bg-rojo {
+  background-color: #c12332
+}
+
+.bg-gris {
+  background-color: #646464
+}
+
+.btn-azul {
+  color: #6192a0;
+}
+
+.bold{
+  font-weight: bold;
+}
+
+ /* nav */
+
+.dropdown-toggle::after {
+  display: none!important;
+}
+
+.navbar-light .navbar-nav .nav-link 
+ {
+  color: #fff!important;
+}
+
+.logo{
+  width: 50%;
+}
+
+@media screen and (min-width: 992px) {
+  .horizontal {
+    color: #fff!important;    
+    display: inline;
+    border-left: 2px solid;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+  }
+
+  .first { 
+    border-left: none; 
+    padding-left: 0; 
+  }
+
+  .logo{
+    width: 100%;
+  }
+
+    .pt-lg-6{
+    margin-top: 50px;
+  } 
+}
+
+@media screen and (max-width: 992px) {
+  .menu-superior {
+    margin-bottom: 15px;
+  }
+}
+
+.pt-lg-7 {
+  margin-top: 55px;
+}
+
+.nav-link:hover {
+  background-color: #84b3c2;
+}
+
+.dropdown-menu {
+  background-color: #84b3c2;
+}
+
+.dropdown-item {
+  color: #fff;
+  font-weight: bold;
+  background-color: transparent;
+}
+
+.dropdown-divider {
+  border-color: #6192a0!important;
+  margin: .2rem 0!important;
+}
+
+.navbar-toggler {
+  background-color: #84b3c2!important;
+}
+
+.navbar-toggler-icon {
+  opacity: 0.5;
+}
+
+.dropdown-item:hover {
+    color: #6192a0!important;
+    background-color: transparent!important;
+}
+
+li.show {
+  color: #6192a0!important;
+}
+
+/* blog */
+
+.cuadricula {
+  padding: 10px;
+}
+
+.inner-cuadricula {
+	position: relative;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+
+}
+
+.inner-cuadricula:before {
+	content: "";
+	display: block;
+	padding-top: 100%; 
+}
+
+.display-5 {
+  font-size: 40px;
+  line-height: 0.8;
+  margin-bottom: 0;
+}
+
