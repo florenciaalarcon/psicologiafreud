@@ -4,19 +4,16 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-full/blob/master/LICENSE)
  */
 
+ /*!
+ * Start Bootstrap - Full Slider (https://startbootstrap.com/template-overviews/full-slider)
+ * Copyright 2013-2017 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-full-slider/blob/master/LICENSE)
+ */
+
+
  body {
  font-family: 'Raleway', sans-serif;
  }
-
-header {
-  background: url('../img/home.jpg') no-repeat center center fixed;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  background-size: cover;
-  -o-background-size: cover;
-  height: 800px;
-  background-position-y: 100px;
-}
 
 .cl-blanco {
   color: white;
@@ -48,6 +45,11 @@ header {
 
 .bold{
   font-weight: bold;
+}
+
+a:hover {
+    color: #84b3c2 !important;
+    text-decoration: none !important;
 }
 
  /* nav */
@@ -130,8 +132,34 @@ header {
     background-color: transparent!important;
 }
 
-li.show {
-  color: #6192a0!important;
+
+ /* slider */
+
+ .carousel-caption h3, .carousel-caption p{
+  text-shadow: #333 2px 2px 2px;  
+ }
+
+.carousel-item {
+  height: 100vh;
+  min-height: 300px;
+  background: no-repeat center center scroll;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+@media screen and (max-width: 992px) {
+  .carousel-item {
+    height: 50vh;
+    margin-top: 170px;
+  }
+}
+
+/*circulos*/
+
+.titulo-circulo {
+  font-size: 1rem
 }
 
 /* blog */
