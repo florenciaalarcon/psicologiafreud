@@ -21,16 +21,24 @@
   color: #84b3c2;
 }
 
+.cl-gris{
+  color: #646464;
+}
+
+.cl-rojo{
+  color: #c12332;
+}
+
 .bg-azul {
-  background-color: #6192a0
+  background-color: #6192a0;
 }
 
 .bg-rojo {
-  background-color: #c12332
+  background-color: #c12332;
 }
 
 .bg-gris {
-  background-color: #646464
+  background-color: #646464;
 }
 
 .btn-azul {
@@ -185,3 +193,14 @@ a:hover {
   margin-bottom: 0;
 }
 
+/*paginas*/
+
+.titulo-pagina {
+  margin-top: 175px;
+}
+
+/*breadcrumb*/
+
+.breadcrumb {
+  background-color: transparent!important;
+}
