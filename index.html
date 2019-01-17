@@ -242,37 +242,41 @@
         <div class="carousel-inner" role="listbox">
 
           <!-- Slide One - Set the background image for this slide in the line below -->
-          <div class="carousel-item active" style="background-image: url('img/slide_1.jpg')">
+          <div class="carousel-item active" style="background-image: url('img/slide_1.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2019">
             <div class="carousel-caption d-none d-md-block">
               <h3 class="display-2 bold">Presentación de la materia</h3>
-              <p class="lead"><a class="cl-blanco" href="">Objetivo y modalidad de cursada y plantel docente.</a></p>
+              <p class="lead">Objetivo y modalidad de cursada y plantel docente.</p>
+              <a href="" class="btn btn-primary">Ver más</a>
             </div>
           </div>
 
           <!-- Slide Two - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_2.jpg')">
+          <div class="carousel-item" style="background-image: url('img/slide_2.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2018">
             <div class="carousel-caption d-none d-md-block">
               <h3 class="display-2 bold">Referencias al programa</h3>
-              <p class="lead"><a class="cl-blanco" href="">Conocé el programa de nuestra cátedra.</a></p>
+              <p class="lead">Conocé el programa de nuestra cátedra.</p>
+              <a href="" class="btn btn-primary">Ver más</a>
             </div>
           </div>
 
           <!-- Slide Three - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_3.jpg')">
+          <div class="carousel-item" style="background-image: url('img/slide_3.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2017">
             <div class="carousel-caption d-none d-md-block">
               <h3 class="display-2 bold">Información importante para los alumnos</h3>
-              <p class="lead"><a class="cl-blanco" href="">Conocé actividades importantes para tu formación.</a></p>
+              <p class="lead">Conocé actividades importantes para tu formación.</p>
+              <a href="" class="btn btn-primary">Ver más</a>
             </div>
           </div>
 
            <!-- Slide Four - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_4.jpg')">
+          <div class="carousel-item" style="background-image: url('img/slide_4.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2018">
             <div class="carousel-caption d-none d-md-block">
-              <h3 class="display-2 bold">Alumnos</h3>
+              <h3 class="display-2 bold">Comunicación</h3>
               <div class="">
-                <p class="lead"><a class="cl-blanco" href="">Escuela de ayudantes alumnos</a></p>
-                <p class="lead"><a class="cl-blanco" href="">El espacio de investigación de alumnos</a></p>
-                <p class="lead"><a class="cl-blanco" href="">Artículos de los alumnos</a></p>
+                <p class="lead">Escuela de ayudantes alumnos.</p>
+                <p class="lead">El espacio de investigación de alumnos.</p>
+                <p class="lead">Artículos de los alumnos.</p>
+                <a href="" class="btn btn-primary">Ver más</a>
               </div>
             </div>
           </div>
@@ -514,5 +518,13 @@
   <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 </body>
+  
+  <script>
+
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+     })
+
+  </script>
 
 </html>
