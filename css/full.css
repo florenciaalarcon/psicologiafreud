@@ -158,6 +158,16 @@ a:hover {
   }
 }
 
+.btn-primary {
+  border: #6192a0!important;;
+  background-color: #6192a0!important;
+}
+
+.btn-secondary {
+  margin-top: 180px;
+  margin-left: 1413px;
+}
+
 /*circulos*/
 
 .titulo-circulo {
