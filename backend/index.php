@@ -282,6 +282,8 @@ class cdefault {
 			$this->Page_Terminate("permisoslist.php");
 		if ($Security->AllowList(CurrentProjectID() . 'usuarios'))
 			$this->Page_Terminate("usuarioslist.php");
+		if ($Security->AllowList(CurrentProjectID() . 'slider'))
+			$this->Page_Terminate("sliderlist.php");
 		if ($Security->IsLoggedIn()) {
 			$this->setFailureMessage(ew_DeniedMsg() . "<br><br><a href=\"logout.php\">" . $Language->Phrase("BackToLogin") . "</a>");
 		} else {

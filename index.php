@@ -1,3 +1,9 @@
+<?php 
+
+include_once("api.php");
+
+ ?>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -232,54 +238,41 @@
 
         <ol class="carousel-indicators">
 
-          <li data-target="#slider-principal" data-slide-to="0" class="active"></li>
-          <li data-target="#slider-principal" data-slide-to="1"></li>
-          <li data-target="#slider-principal" data-slide-to="2"></li>
-          <li data-target="#slider-principal" data-slide-to="3"></li>
+          <?php 
+
+            $slider = obtenerSlider();
+
+            foreach ($slider as $key => $value) {
+              ?>
+
+                <li data-target="#slider-principal" data-slide-to="<?php echo $key ?>" class="<?php echo $key == 0?"active":"" ?>"></li>
+              
+              <?php 
+            }
+
+          ?>
 
         </ol>
 
         <div class="carousel-inner" role="listbox">
 
-          <!-- Slide One - Set the background image for this slide in the line below -->
-          <div class="carousel-item active" style="background-image: url('img/slide_1.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2019">
-            <div class="carousel-caption d-none d-md-block">
-              <h3 class="display-2 bold">Presentación de la materia</h3>
-              <p class="lead">Objetivo y modalidad de cursada y plantel docente.</p>
-              <a href="" class="btn btn-primary">Ver más</a>
-            </div>
-          </div>
+          <?php 
 
-          <!-- Slide Two - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_2.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2018">
-            <div class="carousel-caption d-none d-md-block">
-              <h3 class="display-2 bold">Referencias al programa</h3>
-              <p class="lead">Conocé el programa de nuestra cátedra.</p>
-              <a href="" class="btn btn-primary">Ver más</a>
-            </div>
-          </div>
+            foreach ($slider as $key => $value) {
+              ?>
 
-          <!-- Slide Three - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_3.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2017">
-            <div class="carousel-caption d-none d-md-block">
-              <h3 class="display-2 bold">Información importante para los alumnos</h3>
-              <p class="lead">Conocé actividades importantes para tu formación.</p>
-              <a href="" class="btn btn-primary">Ver más</a>
-            </div>
-          </div>
+                <div class="carousel-item <?php echo $key == 0?"active":"" ?>" style="background-image: url('backend/uploads/<?php echo $value["imagen"] ?>')" data-toggle="tooltip" data-placement="left" data-html="true" title="<?php echo $value["informacion"] ?>">
+                  <div class="carousel-caption d-none d-md-block">
+                    <h3 class="display-2 bold"><?php echo $value["titulo"] ?></h3>
+                    <p class="lead"><?php echo $value["subtitulo"] ?></p>
+                    <a href="<?php echo $value["link"] ?>" class="btn btn-primary">Ver más</a>
+                  </div>
+                </div>
+              
+              <?php 
+            }           
 
-           <!-- Slide Four - Set the background image for this slide in the line below -->
-          <div class="carousel-item" style="background-image: url('img/slide_4.jpg')" data-toggle="tooltip" data-placement="left" data-html="true" title="<b>Nombre de la Obra: </b> Nombre de la obra <br><b>Autor: </b>Autor<br><b>Año: </b>2018">
-            <div class="carousel-caption d-none d-md-block">
-              <h3 class="display-2 bold">Comunicación</h3>
-              <div class="">
-                <p class="lead">Escuela de ayudantes alumnos.</p>
-                <p class="lead">El espacio de investigación de alumnos.</p>
-                <p class="lead">Artículos de los alumnos.</p>
-                <a href="" class="btn btn-primary">Ver más</a>
-              </div>
-            </div>
-          </div>
+          ?>
           
         </div>
 

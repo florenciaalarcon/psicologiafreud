@@ -586,6 +586,9 @@
     <menu id="4">
       <phrase id="menutext" value="Menú" />
     </menu>
+    <menu id="10">
+      <phrase id="menutext" value="Slider" />
+    </menu>
     <menu id="1">
       <phrase id="menutext" value="Archivos" />
     </menu>
@@ -752,6 +755,27 @@
       </field>
       <field id="idnivel">
         <phrase id="fldcaption" value="id Nivel" />
+      </field>
+    </table>
+    <table id="slider">
+      <phrase id="tblcaption" value="Slider" />
+      <field id="id">
+        <phrase id="fldcaption" value="id" />
+      </field>
+      <field id="imagen">
+        <phrase id="fldcaption" value="Imagen" />
+      </field>
+      <field id="informacion">
+        <phrase id="fldcaption" value="Información" />
+      </field>
+      <field id="titulo">
+        <phrase id="fldcaption" value="Título" />
+      </field>
+      <field id="subtitulo">
+        <phrase id="fldcaption" value="Sutítulo" />
+      </field>
+      <field id="link">
+        <phrase id="fldcaption" value="Link" />
       </field>
     </table>
   </project>

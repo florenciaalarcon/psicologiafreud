@@ -10,12 +10,44 @@ if (mysqli_connect_errno())
   echo "Failed to connect to MySQL: " . mysqli_connect_error();
   }
 
-
-function obtenerMenu(){
+function consulta($consulta){
 
 	global $con;
 	
 	$respuesta = array();
+
+	$sql = $consulta;
+
+	$resultado = mysqli_query($con, $sql);
+
+	if ($resultado) {
+		if (mysqli_num_rows($resultado) > 0) {
+			for ($i=0; $i < mysqli_num_rows($resultado)	; $i++) { 
+				$registro = mysqli_fetch_assoc($resultado);
+				$registro = array_map("utf8_encode", $registro);
+
+				array_push($respuesta, $registro);
+			}
+		}
+	}
+
+	return $respuesta;	
+
+}
+
+/*******************************************************************/
+
+function obtenerSlider(){
+
+	$sql = "SELECT * FROM slider";
+
+	return consulta($sql);
+
+}
+
+/*******************************************************************/
+
+function obtenerMenu(){
 
 	$sql = "SELECT
 	categorias_blog.id,
@@ -40,24 +72,16 @@ function obtenerMenu(){
 	INNER JOIN menu ON paginas_estaticas.idMenu = menu.id
 	ORDER BY ordenmenu, orden, denominacion";
 
-	$resultado = mysqli_query($con, $sql);
-
-	if ($resultado) {
-		if (mysqli_num_rows($resultado) > 0) {
-			for ($i=0; $i < mysqli_num_rows($resultado)	; $i++) { 
-				$registro = mysqli_fetch_assoc($resultado);
-				$registro = array_map("utf8_encode", $registro);
-
-				array_push($respuesta, $registro);
-			}
-		}
-	}
-
-	return $respuesta;
+	return consulta($sql);
 
 }
 
-var_dump(obtenerMenu()) ;
+if (isset($_GET["debug"])) {
 
+	var_dump(obtenerMenu()) ;
+
+	var_dump(obtenerSlider()) ;
+	
+}
 
 ?>
