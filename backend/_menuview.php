@@ -341,6 +341,8 @@ class cp_menu_view extends c_menu {
 		$this->CurrentAction = (@$_GET["a"] <> "") ? $_GET["a"] : @$_POST["a_list"]; // Set up current action
 		$this->denominacion->SetVisibility();
 		$this->orden->SetVisibility();
+		$this->imagen->SetVisibility();
+		$this->accesoDirecto->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -593,6 +595,9 @@ class cp_menu_view extends c_menu {
 		$this->id->setDbValue($rs->fields('id'));
 		$this->denominacion->setDbValue($rs->fields('denominacion'));
 		$this->orden->setDbValue($rs->fields('orden'));
+		$this->imagen->Upload->DbValue = $rs->fields('imagen');
+		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
+		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
 	}
 
 	// Load DbValue from recordset
@@ -602,6 +607,8 @@ class cp_menu_view extends c_menu {
 		$this->id->DbValue = $row['id'];
 		$this->denominacion->DbValue = $row['denominacion'];
 		$this->orden->DbValue = $row['orden'];
+		$this->imagen->Upload->DbValue = $row['imagen'];
+		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
 	}
 
 	// Render row values based on field settings
@@ -627,6 +634,8 @@ class cp_menu_view extends c_menu {
 		// id
 		// denominacion
 		// orden
+		// imagen
+		// accesoDirecto
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
 
@@ -638,6 +647,22 @@ class cp_menu_view extends c_menu {
 		$this->orden->ViewValue = $this->orden->CurrentValue;
 		$this->orden->ViewCustomAttributes = "";
 
+		// imagen
+		if (!ew_Empty($this->imagen->Upload->DbValue)) {
+			$this->imagen->ViewValue = $this->imagen->Upload->DbValue;
+		} else {
+			$this->imagen->ViewValue = "";
+		}
+		$this->imagen->ViewCustomAttributes = "";
+
+		// accesoDirecto
+		if (strval($this->accesoDirecto->CurrentValue) <> "") {
+			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
+		} else {
+			$this->accesoDirecto->ViewValue = NULL;
+		}
+		$this->accesoDirecto->ViewCustomAttributes = "";
+
 			// denominacion
 			$this->denominacion->LinkCustomAttributes = "";
 			$this->denominacion->HrefValue = "";
@@ -647,6 +672,17 @@ class cp_menu_view extends c_menu {
 			$this->orden->LinkCustomAttributes = "";
 			$this->orden->HrefValue = "";
 			$this->orden->TooltipValue = "";
+
+			// imagen
+			$this->imagen->LinkCustomAttributes = "";
+			$this->imagen->HrefValue = "";
+			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
+			$this->imagen->TooltipValue = "";
+
+			// accesoDirecto
+			$this->accesoDirecto->LinkCustomAttributes = "";
+			$this->accesoDirecto->HrefValue = "";
+			$this->accesoDirecto->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -808,8 +844,10 @@ f_menuview.ValidateRequired = false;
 <?php } ?>
 
 // Dynamic selection lists
-// Form object for search
+f_menuview.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
+f_menuview.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
 
+// Form object for search
 </script>
 <script type="text/javascript">
 
@@ -860,6 +898,29 @@ $p_menu_view->ShowMessage();
 <span id="el__menu_orden">
 <span<?php echo $_menu->orden->ViewAttributes() ?>>
 <?php echo $_menu->orden->ViewValue ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($_menu->imagen->Visible) { // imagen ?>
+	<tr id="r_imagen">
+		<td><span id="elh__menu_imagen"><?php echo $_menu->imagen->FldCaption() ?></span></td>
+		<td data-name="imagen"<?php echo $_menu->imagen->CellAttributes() ?>>
+<span id="el__menu_imagen">
+<span<?php echo $_menu->imagen->ViewAttributes() ?>>
+<?php echo ew_GetFileViewTag($_menu->imagen, $_menu->imagen->ViewValue) ?>
+</span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
+	<tr id="r_accesoDirecto">
+		<td><span id="elh__menu_accesoDirecto"><?php echo $_menu->accesoDirecto->FldCaption() ?></span></td>
+		<td data-name="accesoDirecto"<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
+<span id="el__menu_accesoDirecto">
+<span<?php echo $_menu->accesoDirecto->ViewAttributes() ?>>
+<?php echo $_menu->accesoDirecto->ViewValue ?></span>
 </span>
 </td>
 	</tr>

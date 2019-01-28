@@ -10,6 +10,8 @@ class c_menu extends cTable {
 	var $id;
 	var $denominacion;
 	var $orden;
+	var $imagen;
+	var $accesoDirecto;
 
 	//
 	// Table class constructor
@@ -58,6 +60,18 @@ class c_menu extends cTable {
 		$this->orden->Sortable = TRUE; // Allow sort
 		$this->orden->FldDefaultErrMsg = $Language->Phrase("IncorrectFloat");
 		$this->fields['orden'] = &$this->orden;
+
+		// imagen
+		$this->imagen = new cField('_menu', 'menu', 'x_imagen', 'imagen', '`imagen`', '`imagen`', 200, -1, TRUE, '`imagen`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'FILE');
+		$this->imagen->Sortable = TRUE; // Allow sort
+		$this->fields['imagen'] = &$this->imagen;
+
+		// accesoDirecto
+		$this->accesoDirecto = new cField('_menu', 'menu', 'x_accesoDirecto', 'accesoDirecto', '`accesoDirecto`', '`accesoDirecto`', 3, -1, FALSE, '`accesoDirecto`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'RADIO');
+		$this->accesoDirecto->Sortable = TRUE; // Allow sort
+		$this->accesoDirecto->OptionCount = 2;
+		$this->accesoDirecto->FldDefaultErrMsg = $Language->Phrase("IncorrectInteger");
+		$this->fields['accesoDirecto'] = &$this->accesoDirecto;
 	}
 
 	// Set Field Visibility
@@ -543,6 +557,8 @@ class c_menu extends cTable {
 		$this->id->setDbValue($rs->fields('id'));
 		$this->denominacion->setDbValue($rs->fields('denominacion'));
 		$this->orden->setDbValue($rs->fields('orden'));
+		$this->imagen->Upload->DbValue = $rs->fields('imagen');
+		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
 	}
 
 	// Render list row values
@@ -559,6 +575,8 @@ class c_menu extends cTable {
 
 		// denominacion
 		// orden
+		// imagen
+		// accesoDirecto
 		// id
 
 		$this->id->ViewValue = $this->id->CurrentValue;
@@ -571,6 +589,22 @@ class c_menu extends cTable {
 		// orden
 		$this->orden->ViewValue = $this->orden->CurrentValue;
 		$this->orden->ViewCustomAttributes = "";
+
+		// imagen
+		if (!ew_Empty($this->imagen->Upload->DbValue)) {
+			$this->imagen->ViewValue = $this->imagen->Upload->DbValue;
+		} else {
+			$this->imagen->ViewValue = "";
+		}
+		$this->imagen->ViewCustomAttributes = "";
+
+		// accesoDirecto
+		if (strval($this->accesoDirecto->CurrentValue) <> "") {
+			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
+		} else {
+			$this->accesoDirecto->ViewValue = NULL;
+		}
+		$this->accesoDirecto->ViewCustomAttributes = "";
 
 		// id
 		$this->id->LinkCustomAttributes = "";
@@ -586,6 +620,17 @@ class c_menu extends cTable {
 		$this->orden->LinkCustomAttributes = "";
 		$this->orden->HrefValue = "";
 		$this->orden->TooltipValue = "";
+
+		// imagen
+		$this->imagen->LinkCustomAttributes = "";
+		$this->imagen->HrefValue = "";
+		$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
+		$this->imagen->TooltipValue = "";
+
+		// accesoDirecto
+		$this->accesoDirecto->LinkCustomAttributes = "";
+		$this->accesoDirecto->HrefValue = "";
+		$this->accesoDirecto->TooltipValue = "";
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -617,6 +662,21 @@ class c_menu extends cTable {
 		$this->orden->PlaceHolder = ew_RemoveHtml($this->orden->FldCaption());
 		if (strval($this->orden->EditValue) <> "" && is_numeric($this->orden->EditValue)) $this->orden->EditValue = ew_FormatNumber($this->orden->EditValue, -2, -1, -2, 0);
 
+		// imagen
+		$this->imagen->EditAttrs["class"] = "form-control";
+		$this->imagen->EditCustomAttributes = "";
+		if (!ew_Empty($this->imagen->Upload->DbValue)) {
+			$this->imagen->EditValue = $this->imagen->Upload->DbValue;
+		} else {
+			$this->imagen->EditValue = "";
+		}
+		if (!ew_Empty($this->imagen->CurrentValue))
+			$this->imagen->Upload->FileName = $this->imagen->CurrentValue;
+
+		// accesoDirecto
+		$this->accesoDirecto->EditCustomAttributes = "";
+		$this->accesoDirecto->EditValue = $this->accesoDirecto->Options(FALSE);
+
 		// Call Row Rendered event
 		$this->Row_Rendered();
 	}
@@ -646,9 +706,13 @@ class c_menu extends cTable {
 				if ($ExportPageType == "view") {
 					if ($this->denominacion->Exportable) $Doc->ExportCaption($this->denominacion);
 					if ($this->orden->Exportable) $Doc->ExportCaption($this->orden);
+					if ($this->imagen->Exportable) $Doc->ExportCaption($this->imagen);
+					if ($this->accesoDirecto->Exportable) $Doc->ExportCaption($this->accesoDirecto);
 				} else {
 					if ($this->denominacion->Exportable) $Doc->ExportCaption($this->denominacion);
 					if ($this->orden->Exportable) $Doc->ExportCaption($this->orden);
+					if ($this->imagen->Exportable) $Doc->ExportCaption($this->imagen);
+					if ($this->accesoDirecto->Exportable) $Doc->ExportCaption($this->accesoDirecto);
 				}
 				$Doc->EndExportRow();
 			}
@@ -682,9 +746,13 @@ class c_menu extends cTable {
 					if ($ExportPageType == "view") {
 						if ($this->denominacion->Exportable) $Doc->ExportField($this->denominacion);
 						if ($this->orden->Exportable) $Doc->ExportField($this->orden);
+						if ($this->imagen->Exportable) $Doc->ExportField($this->imagen);
+						if ($this->accesoDirecto->Exportable) $Doc->ExportField($this->accesoDirecto);
 					} else {
 						if ($this->denominacion->Exportable) $Doc->ExportField($this->denominacion);
 						if ($this->orden->Exportable) $Doc->ExportField($this->orden);
+						if ($this->imagen->Exportable) $Doc->ExportField($this->imagen);
+						if ($this->accesoDirecto->Exportable) $Doc->ExportField($this->accesoDirecto);
 					}
 					$Doc->EndExportRow();
 				}

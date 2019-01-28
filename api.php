@@ -2,6 +2,8 @@
 
 include_once("backend/ewcfg13.php");
 
+$MESES = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+
 $con = mysqli_connect($EW_CONN["DB"]["host"],$EW_CONN["DB"]["user"],$EW_CONN["DB"]["pass"],$EW_CONN["DB"]["db"]);
 
 // Check connection
@@ -35,6 +37,50 @@ function consulta($consulta){
 
 }
 
+function fecha($fecha){
+	global $MESES;
+	return date('d', strtotime($fecha))." de ".$MESES[date('n', strtotime($fecha))-1]." del ".date('Y', strtotime($fecha));
+}
+
+function ultimasEntradas(){
+
+	global $MESES;	
+
+	$ult = obtenerUltimasEntradas();
+
+	?>
+
+      <h3 class="text-center mb-5">Últimas Entradas</h3>
+
+      <?php 
+
+      	foreach ($ult as $key => $value) {
+      		?>
+			      <div class="row my-3">
+
+			        <div class="col-md-3">
+			          <div class="bg-rojo">
+			            <h6 class="cl-blanco text-center display-5"><?php echo date('d', strtotime($value["fechaModificacion"])) ?></h6>
+			            <h6 class="cl-blanco text-center bold text-uppercase my-0"><?php echo  substr($MESES[date('n', strtotime($value["fechaModificacion"]))-1],0,3) ?></h6>
+			          </div>
+			        </div>
+
+			        <div class="col-md-9">
+			          <h5 class="cl-azul bold"><a class="cl-azul" href="entradablog.php?id=<?php echo $value["id"] ?>"><?php echo $value["titulo"] ?></a></h5>
+			        </div>
+
+			      </div>
+
+			      <div class="dropdown-divider"></div>
+      		
+      		<?php
+      	}
+
+      ?>
+
+	<?php
+}
+
 /*******************************************************************/
 
 function navegador(){
@@ -46,24 +92,19 @@ function navegador(){
         <div class="container">
           <div class="row">
             <div class="col-lg-4">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="index.php">
                   <img class="logo" src="img/logo-blanco.svg" alt="logo">
                 </a>
             </div>
-            <div class="col-lg-3 pt-lg-6 menu-superior">
-              <div class="row">
-                <div class="col-lg-12 d-none d-lg-block text-right">
-                  <a class= "lead unstyled cl-blanco" href="">Contacto</a>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-4 pt-lg-5 menu-superior">
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text bg-transparent cl-azul border-0" id="icono-buscador"><i class="fas fa-search"></i></span>
-                </div>
-                <input type="search" class="form-control" placeholder="Buscar" aria-describedby="icono-buscador">
-              </div>
+            <div class="col-lg-7 pt-lg-5 menu-superior">
+							<form id="buscador" action="busqueda.php" method="GET">
+								<div class="input-group mb-3">
+								  <input value="<?php echo isset($_GET["q"])?$_GET["q"]:"" ?>" name="q" type="search" class="form-control" placeholder="Buscar" aria-label="Buscar" aria-describedby="boton-buscador">
+								  <div class="input-group-append">
+								    <button class="btn btn-primary" type="button" id="boton-buscador"><i class="fas fa-search"></i> Buscar</button>
+								  </div>
+								</div>
+							</form>
             </div>
             <div class="d-none d-lg-block col-lg-1 pt-lg-7">
                 <a class="cl-azul" target="_blank" href="https://www.facebook.com/Freud1Delgado"><i class="fab fa-facebook-f"></i></a>
@@ -85,148 +126,44 @@ function navegador(){
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mx-auto">
-          <li class="nav-item dropdown horizontal first">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              INFORMACIÓN ACADÉMICA</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Presentación de la materia</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Objetivos, modalidad de cursada y evaluación</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Programa de la materia</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Docentes</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Información de teóricos</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">información de seminarios</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Información de prácticos</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Áreas de responsabilidad</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Información de la cursada</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Investigaciones</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Textos de los docentes de la cátedra</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Agenda académica</a>
+        	<li>
+        		<div>
+					
+							<?php 
+
+								$menu = obtenerMenu();
+
+								$idmenu = 0;
+
+								foreach ($menu as $key => $value) {
+
+									if ($value["idMenu"] != $idmenu) {
+										?>
+						            </div>
+						          </li>											
+						          <li class="nav-item dropdown horizontal <?php echo $key == 0?'first':'' ?> ">
+						            <a class="nav-link dropdown-toggle text-uppercase" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						              <?php echo $value["denominacionmenu"] ?></a>
+						            <div class="dropdown-menu" aria-labelledby="navbarDropdown">								
+										<?php
+										$idmenu = $value["idMenu"];
+
+									}
+
+									?>
+
+			              <a class="dropdown-item" href="<?php echo $value["tipo"] == "estatica" ? 'paginaestatica.php?id='.$value["id"]:'categoriablog.php?id='.$value["id"] ?>"><?php echo $value["denominacion"] ?></a>
+			              <div class="dropdown-divider"></div>							
+
+									<?php
+
+								}
+
+							?>
+
             </div>
           </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              EXTENSIÓN</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Ateneos clínicos</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Psicoanálisis y cultura</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Taller de escritura</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Taller de exámenes finales</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Pasantías</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Conferencias</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Cursos</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Jornadas</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Material de la I Jornada de Psicoanalisis Freud I realizada en 2008</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Escuela de formación de ayudantes</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Dispositivo asistencial</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              REFERENCIAS AL PROGRAMA</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Presentación </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Instructivo</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Referencias al programa</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              REFERENCIAS SOBRE LA OBRA DE FREUD</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Presentación</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lo contemporaneo de Freud</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lo actual</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Galería fotográfica de Freud</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              MATERIA ELECTIVA</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Materia electiva: Construcción de los conceptos psicoanalíticos</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Programa</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Agenda académica</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Contacto</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              CONEXIONES</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              AGENDA ABIERTA</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown horizontal">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              COMUNICACIÓN</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Lorem Impsum</a>
-            </div>
-          </li>
+				</ul>
       </div>
     </nav>
 
@@ -297,6 +234,10 @@ function scripts(){
       $('[data-toggle="tooltip"]').tooltip()
      })
 
+    $("#boton-buscador").click(function(){
+    	$("#buscador").submit();
+    })
+
   </script>
 
 	<?php
@@ -342,6 +283,172 @@ function obtenerSlider(){
 
 /*******************************************************************/
 
+function obtenerCategoriaBlog($idcategoria){
+
+	$sql = "SELECT
+		categorias_blog.*,
+		menu.id AS idmenu,
+		menu.denominacion AS denominacionmenu
+		FROM categorias_blog
+		INNER JOIN menu
+		ON categorias_blog.idMenu = menu.id
+		WHERE categorias_blog.id = '".$idcategoria."'";
+
+	return consulta($sql);
+
+}
+
+
+/*******************************************************************/
+
+function obtenerEntradasBlog($idcategoria){
+
+	$sql = "SELECT *
+	FROM entradas_blog
+		WHERE idCategoria = '".$idcategoria."'";
+
+	return consulta($sql);
+
+}
+
+/*******************************************************************/
+
+function obtenerDatosMenu($idmenu){
+
+	$sql = "SELECT *
+	FROM menu
+	WHERE id = '".$idmenu."'";
+
+	return consulta($sql);	
+}
+
+/*******************************************************************/
+
+function obtenerItemsMenu($idmenu){
+
+	$sql = "SELECT
+	categorias_blog.id,
+	categorias_blog.denominacion,
+	categorias_blog.idMenu,
+	categorias_blog.orden,
+	menu.denominacion as denominacionmenu,
+	menu.orden as ordenmenu,
+	'blog' AS tipo
+	FROM categorias_blog
+	INNER JOIN menu ON categorias_blog.idMenu = menu.id
+	UNION
+	SELECT
+	paginas_estaticas.id,
+	paginas_estaticas.titulo,
+	paginas_estaticas.idMenu,
+	paginas_estaticas.orden,
+	menu.denominacion as denominacionmenu,
+	menu.orden as ordenmenu,
+	'estatica' AS tipo
+	FROM paginas_estaticas
+	INNER JOIN menu ON paginas_estaticas.idMenu = menu.id
+	WHERE menu.id = '".$idmenu."'
+	ORDER BY ordenmenu, orden, denominacion";
+
+	return consulta($sql);	
+}
+
+/*******************************************************************/
+
+function obtenerUltimasEntradas(){
+
+	$sql = "SELECT *
+	FROM entradas_blog
+	ORDER BY id desc
+	LIMIT 3";
+
+	return consulta($sql);	
+}
+/*******************************************************************/
+
+function obtenerContenidoPaginaEstatica($id){
+
+	$sql = "SELECT
+	paginas_estaticas.*,
+	menu.id AS idmenu,
+	menu.denominacion AS denmenu
+	FROM paginas_estaticas
+	INNER JOIN menu
+	ON paginas_estaticas.idMenu = menu.id
+	WHERE paginas_estaticas.id = '".$id."'";
+
+	return consulta($sql);		
+
+}
+
+function obtenerResultadoBusqueda($busqueda){
+
+	$busqueda = utf8_decode($busqueda);
+
+	$sql = "SELECT
+	entradas_blog.id,
+	entradas_blog.titulo,
+	entradas_blog.contenido,
+	entradas_blog.imagenPrincipal,
+	entradas_blog.fechaModificacion,	
+	categorias_blog.denominacion,
+	menu.denominacion as denominacionmenu,
+	'blog' AS tipo
+	FROM entradas_blog
+	INNER JOIN categorias_blog
+	ON entradas_blog.idCategoria = categorias_blog.id
+	INNER JOIN menu ON categorias_blog.idMenu = menu.id
+	WHERE CONCAT(
+		entradas_blog.titulo,
+		entradas_blog.contenido,
+		categorias_blog.denominacion,
+		menu.denominacion
+	) LIKE '%".$busqueda."%'
+	UNION
+	SELECT
+	paginas_estaticas.id,
+	paginas_estaticas.titulo,
+	paginas_estaticas.contenido,
+	paginas_estaticas.imagenPrincipal,
+	paginas_estaticas.fechaModificacion,	
+	'',
+	menu.denominacion as denominacionmenu,
+	'estatica' AS tipo
+	FROM paginas_estaticas
+	INNER JOIN menu ON paginas_estaticas.idMenu = menu.id
+	WHERE CONCAT(
+		paginas_estaticas.titulo,
+		paginas_estaticas.contenido,
+		menu.denominacion
+	) LIKE '%".$busqueda."%'";
+
+	return consulta($sql);		
+
+}
+
+/*******************************************************************/
+
+function obtenerContenidoEntradaBlog($id){
+
+	$sql = "SELECT
+	entradas_blog.*,
+	categorias_blog.id AS idcatblog,
+	categorias_blog.denominacion AS dencatblog,
+	menu.id AS idmenu,
+	menu.denominacion AS denmenu
+	FROM entradas_blog
+	INNER JOIN categorias_blog
+	ON entradas_blog.idCategoria = categorias_blog.id
+	INNER JOIN menu
+	ON categorias_blog.idMenu = menu.id
+	WHERE entradas_blog.id = '".$id."'";
+
+	return consulta($sql);		
+
+}
+
+/*******************************************************************/
+
 function obtenerMenu(){
 
 	$sql = "SELECT
@@ -375,7 +482,7 @@ if (isset($_GET["debug"])) {
 
 	var_dump(obtenerMenu()) ;
 
-	var_dump(obtenerSlider()) ;
+	var_dump(obtenerSlider());
 	
 }
 

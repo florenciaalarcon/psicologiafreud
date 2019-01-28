@@ -287,6 +287,8 @@ class cp_menu_add extends c_menu {
 		$this->CurrentAction = (@$_GET["a"] <> "") ? $_GET["a"] : @$_POST["a_list"]; // Set up current action
 		$this->denominacion->SetVisibility();
 		$this->orden->SetVisibility();
+		$this->imagen->SetVisibility();
+		$this->accesoDirecto->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -469,6 +471,9 @@ class cp_menu_add extends c_menu {
 		global $objForm, $Language;
 
 		// Get upload data
+		$this->imagen->Upload->Index = $objForm->Index;
+		$this->imagen->Upload->UploadFile();
+		$this->imagen->CurrentValue = $this->imagen->Upload->FileName;
 	}
 
 	// Load default values
@@ -476,6 +481,10 @@ class cp_menu_add extends c_menu {
 		$this->denominacion->CurrentValue = NULL;
 		$this->denominacion->OldValue = $this->denominacion->CurrentValue;
 		$this->orden->CurrentValue = 0;
+		$this->imagen->Upload->DbValue = NULL;
+		$this->imagen->OldValue = $this->imagen->Upload->DbValue;
+		$this->imagen->CurrentValue = NULL; // Clear file related field
+		$this->accesoDirecto->CurrentValue = 0;
 	}
 
 	// Load form values
@@ -483,11 +492,15 @@ class cp_menu_add extends c_menu {
 
 		// Load from form
 		global $objForm;
+		$this->GetUploadFiles(); // Get upload files
 		if (!$this->denominacion->FldIsDetailKey) {
 			$this->denominacion->setFormValue($objForm->GetValue("x_denominacion"));
 		}
 		if (!$this->orden->FldIsDetailKey) {
 			$this->orden->setFormValue($objForm->GetValue("x_orden"));
+		}
+		if (!$this->accesoDirecto->FldIsDetailKey) {
+			$this->accesoDirecto->setFormValue($objForm->GetValue("x_accesoDirecto"));
 		}
 	}
 
@@ -497,6 +510,7 @@ class cp_menu_add extends c_menu {
 		$this->LoadOldRecord();
 		$this->denominacion->CurrentValue = $this->denominacion->FormValue;
 		$this->orden->CurrentValue = $this->orden->FormValue;
+		$this->accesoDirecto->CurrentValue = $this->accesoDirecto->FormValue;
 	}
 
 	// Load row based on key values
@@ -531,6 +545,9 @@ class cp_menu_add extends c_menu {
 		$this->id->setDbValue($rs->fields('id'));
 		$this->denominacion->setDbValue($rs->fields('denominacion'));
 		$this->orden->setDbValue($rs->fields('orden'));
+		$this->imagen->Upload->DbValue = $rs->fields('imagen');
+		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
+		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
 	}
 
 	// Load DbValue from recordset
@@ -540,6 +557,8 @@ class cp_menu_add extends c_menu {
 		$this->id->DbValue = $row['id'];
 		$this->denominacion->DbValue = $row['denominacion'];
 		$this->orden->DbValue = $row['orden'];
+		$this->imagen->Upload->DbValue = $row['imagen'];
+		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
 	}
 
 	// Load old record
@@ -582,6 +601,8 @@ class cp_menu_add extends c_menu {
 		// id
 		// denominacion
 		// orden
+		// imagen
+		// accesoDirecto
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
 
@@ -593,6 +614,22 @@ class cp_menu_add extends c_menu {
 		$this->orden->ViewValue = $this->orden->CurrentValue;
 		$this->orden->ViewCustomAttributes = "";
 
+		// imagen
+		if (!ew_Empty($this->imagen->Upload->DbValue)) {
+			$this->imagen->ViewValue = $this->imagen->Upload->DbValue;
+		} else {
+			$this->imagen->ViewValue = "";
+		}
+		$this->imagen->ViewCustomAttributes = "";
+
+		// accesoDirecto
+		if (strval($this->accesoDirecto->CurrentValue) <> "") {
+			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
+		} else {
+			$this->accesoDirecto->ViewValue = NULL;
+		}
+		$this->accesoDirecto->ViewCustomAttributes = "";
+
 			// denominacion
 			$this->denominacion->LinkCustomAttributes = "";
 			$this->denominacion->HrefValue = "";
@@ -602,6 +639,17 @@ class cp_menu_add extends c_menu {
 			$this->orden->LinkCustomAttributes = "";
 			$this->orden->HrefValue = "";
 			$this->orden->TooltipValue = "";
+
+			// imagen
+			$this->imagen->LinkCustomAttributes = "";
+			$this->imagen->HrefValue = "";
+			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
+			$this->imagen->TooltipValue = "";
+
+			// accesoDirecto
+			$this->accesoDirecto->LinkCustomAttributes = "";
+			$this->accesoDirecto->HrefValue = "";
+			$this->accesoDirecto->TooltipValue = "";
 		} elseif ($this->RowType == EW_ROWTYPE_ADD) { // Add row
 
 			// denominacion
@@ -617,6 +665,22 @@ class cp_menu_add extends c_menu {
 			$this->orden->PlaceHolder = ew_RemoveHtml($this->orden->FldCaption());
 			if (strval($this->orden->EditValue) <> "" && is_numeric($this->orden->EditValue)) $this->orden->EditValue = ew_FormatNumber($this->orden->EditValue, -2, -1, -2, 0);
 
+			// imagen
+			$this->imagen->EditAttrs["class"] = "form-control";
+			$this->imagen->EditCustomAttributes = "";
+			if (!ew_Empty($this->imagen->Upload->DbValue)) {
+				$this->imagen->EditValue = $this->imagen->Upload->DbValue;
+			} else {
+				$this->imagen->EditValue = "";
+			}
+			if (!ew_Empty($this->imagen->CurrentValue))
+				$this->imagen->Upload->FileName = $this->imagen->CurrentValue;
+			if (($this->CurrentAction == "I" || $this->CurrentAction == "C") && !$this->EventCancelled) ew_RenderUploadField($this->imagen);
+
+			// accesoDirecto
+			$this->accesoDirecto->EditCustomAttributes = "";
+			$this->accesoDirecto->EditValue = $this->accesoDirecto->Options(FALSE);
+
 			// Add refer script
 			// denominacion
 
@@ -626,6 +690,15 @@ class cp_menu_add extends c_menu {
 			// orden
 			$this->orden->LinkCustomAttributes = "";
 			$this->orden->HrefValue = "";
+
+			// imagen
+			$this->imagen->LinkCustomAttributes = "";
+			$this->imagen->HrefValue = "";
+			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
+
+			// accesoDirecto
+			$this->accesoDirecto->LinkCustomAttributes = "";
+			$this->accesoDirecto->HrefValue = "";
 		}
 		if ($this->RowType == EW_ROWTYPE_ADD ||
 			$this->RowType == EW_ROWTYPE_EDIT ||
@@ -687,6 +760,28 @@ class cp_menu_add extends c_menu {
 		// orden
 		$this->orden->SetDbValueDef($rsnew, $this->orden->CurrentValue, 0, strval($this->orden->CurrentValue) == "");
 
+		// imagen
+		if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+			$this->imagen->Upload->DbValue = ""; // No need to delete old file
+			if ($this->imagen->Upload->FileName == "") {
+				$rsnew['imagen'] = NULL;
+			} else {
+				$rsnew['imagen'] = $this->imagen->Upload->FileName;
+			}
+		}
+
+		// accesoDirecto
+		$this->accesoDirecto->SetDbValueDef($rsnew, $this->accesoDirecto->CurrentValue, NULL, strval($this->accesoDirecto->CurrentValue) == "");
+		if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+			if (!ew_Empty($this->imagen->Upload->Value)) {
+				if ($this->imagen->Upload->FileName == $this->imagen->Upload->DbValue) { // Overwrite if same file name
+					$this->imagen->Upload->DbValue = ""; // No need to delete any more
+				} else {
+					$rsnew['imagen'] = ew_UploadFileNameEx(ew_UploadPathEx(TRUE, $this->imagen->UploadPath), $rsnew['imagen']); // Get new file name
+				}
+			}
+		}
+
 		// Call Row Inserting event
 		$rs = ($rsold == NULL) ? NULL : $rsold->fields;
 		$bInsertRow = $this->Row_Inserting($rs, $rsnew);
@@ -699,6 +794,13 @@ class cp_menu_add extends c_menu {
 				// Get insert id if necessary
 				$this->id->setDbValue($conn->Insert_ID());
 				$rsnew['id'] = $this->id->DbValue;
+				if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+					if (!ew_Empty($this->imagen->Upload->Value)) {
+						$this->imagen->Upload->SaveToFile($this->imagen->UploadPath, $rsnew['imagen'], TRUE);
+					}
+					if ($this->imagen->Upload->DbValue <> "")
+						@unlink(ew_UploadPathEx(TRUE, $this->imagen->OldUploadPath) . $this->imagen->Upload->DbValue);
+				}
 			}
 		} else {
 			if ($this->getSuccessMessage() <> "" || $this->getFailureMessage() <> "") {
@@ -718,6 +820,9 @@ class cp_menu_add extends c_menu {
 			$rs = ($rsold == NULL) ? NULL : $rsold->fields;
 			$this->Row_Inserted($rs, $rsnew);
 		}
+
+		// imagen
+		ew_CleanUploadTempPath($this->imagen, $this->imagen->Upload->Index);
 		return $AddRow;
 	}
 
@@ -897,8 +1002,10 @@ f_menuadd.ValidateRequired = false;
 <?php } ?>
 
 // Dynamic selection lists
-// Form object for search
+f_menuadd.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
+f_menuadd.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
 
+// Form object for search
 </script>
 <script type="text/javascript">
 
@@ -943,6 +1050,40 @@ $p_menu_add->ShowMessage();
 <input type="text" data-table="_menu" data-field="x_orden" name="x_orden" id="x_orden" size="30" placeholder="<?php echo ew_HtmlEncode($_menu->orden->getPlaceHolder()) ?>" value="<?php echo $_menu->orden->EditValue ?>"<?php echo $_menu->orden->EditAttributes() ?>>
 </span>
 <?php echo $_menu->orden->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($_menu->imagen->Visible) { // imagen ?>
+	<div id="r_imagen" class="form-group">
+		<label id="elh__menu_imagen" class="col-sm-2 control-label ewLabel"><?php echo $_menu->imagen->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $_menu->imagen->CellAttributes() ?>>
+<span id="el__menu_imagen">
+<div id="fd_x_imagen">
+<span title="<?php echo $_menu->imagen->FldTitle() ? $_menu->imagen->FldTitle() : $Language->Phrase("ChooseFile") ?>" class="btn btn-default btn-sm fileinput-button ewTooltip<?php if ($_menu->imagen->ReadOnly || $_menu->imagen->Disabled) echo " hide"; ?>">
+	<span><?php echo $Language->Phrase("ChooseFileBtn") ?></span>
+	<input type="file" title=" " data-table="_menu" data-field="x_imagen" name="x_imagen" id="x_imagen"<?php echo $_menu->imagen->EditAttributes() ?>>
+</span>
+<input type="hidden" name="fn_x_imagen" id= "fn_x_imagen" value="<?php echo $_menu->imagen->Upload->FileName ?>">
+<input type="hidden" name="fa_x_imagen" id= "fa_x_imagen" value="0">
+<input type="hidden" name="fs_x_imagen" id= "fs_x_imagen" value="255">
+<input type="hidden" name="fx_x_imagen" id= "fx_x_imagen" value="<?php echo $_menu->imagen->UploadAllowedFileExt ?>">
+<input type="hidden" name="fm_x_imagen" id= "fm_x_imagen" value="<?php echo $_menu->imagen->UploadMaxFileSize ?>">
+</div>
+<table id="ft_x_imagen" class="table table-condensed pull-left ewUploadTable"><tbody class="files"></tbody></table>
+</span>
+<?php echo $_menu->imagen->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
+	<div id="r_accesoDirecto" class="form-group">
+		<label id="elh__menu_accesoDirecto" class="col-sm-2 control-label ewLabel"><?php echo $_menu->accesoDirecto->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
+<span id="el__menu_accesoDirecto">
+<div id="tp_x_accesoDirecto" class="ewTemplate"><input type="radio" data-table="_menu" data-field="x_accesoDirecto" data-value-separator="<?php echo $_menu->accesoDirecto->DisplayValueSeparatorAttribute() ?>" name="x_accesoDirecto" id="x_accesoDirecto" value="{value}"<?php echo $_menu->accesoDirecto->EditAttributes() ?>></div>
+<div id="dsl_x_accesoDirecto" data-repeatcolumn="5" class="ewItemList" style="display: none;"><div>
+<?php echo $_menu->accesoDirecto->RadioButtonListHtml(FALSE, "x_accesoDirecto") ?>
+</div></div>
+</span>
+<?php echo $_menu->accesoDirecto->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
 </div>

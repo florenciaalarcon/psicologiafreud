@@ -684,6 +684,16 @@
       <field id="orden">
         <phrase id="fldcaption" value="Orden" />
       </field>
+      <field id="imagen">
+        <phrase id="fldcaption" value="Imagen" />
+      </field>
+      <field id="accesodirecto">
+        <phrase id="fldcaption" value="Acceso Directo" />
+        <phrase id="fldtagvalue1" value="0" />
+        <phrase id="fldtagcaption1" value="NO" />
+        <phrase id="fldtagvalue2" value="1" />
+        <phrase id="fldtagcaption2" value="SI" />
+      </field>
     </table>
     <table id="niveles">
       <phrase id="tblcaption" value="niveles" />

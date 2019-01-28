@@ -372,6 +372,8 @@ class cp_menu_list extends c_menu {
 		$this->SetupListOptions();
 		$this->denominacion->SetVisibility();
 		$this->orden->SetVisibility();
+		$this->imagen->SetVisibility();
+		$this->accesoDirecto->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -693,6 +695,8 @@ class cp_menu_list extends c_menu {
 		$sFilterList = ew_Concat($sFilterList, $this->id->AdvancedSearch->ToJSON(), ","); // Field id
 		$sFilterList = ew_Concat($sFilterList, $this->denominacion->AdvancedSearch->ToJSON(), ","); // Field denominacion
 		$sFilterList = ew_Concat($sFilterList, $this->orden->AdvancedSearch->ToJSON(), ","); // Field orden
+		$sFilterList = ew_Concat($sFilterList, $this->imagen->AdvancedSearch->ToJSON(), ","); // Field imagen
+		$sFilterList = ew_Concat($sFilterList, $this->accesoDirecto->AdvancedSearch->ToJSON(), ","); // Field accesoDirecto
 		if ($this->BasicSearch->Keyword <> "") {
 			$sWrk = "\"" . EW_TABLE_BASIC_SEARCH . "\":\"" . ew_JsEncode2($this->BasicSearch->Keyword) . "\",\"" . EW_TABLE_BASIC_SEARCH_TYPE . "\":\"" . ew_JsEncode2($this->BasicSearch->Type) . "\"";
 			$sFilterList = ew_Concat($sFilterList, $sWrk, ",");
@@ -753,6 +757,22 @@ class cp_menu_list extends c_menu {
 		$this->orden->AdvancedSearch->SearchValue2 = @$filter["y_orden"];
 		$this->orden->AdvancedSearch->SearchOperator2 = @$filter["w_orden"];
 		$this->orden->AdvancedSearch->Save();
+
+		// Field imagen
+		$this->imagen->AdvancedSearch->SearchValue = @$filter["x_imagen"];
+		$this->imagen->AdvancedSearch->SearchOperator = @$filter["z_imagen"];
+		$this->imagen->AdvancedSearch->SearchCondition = @$filter["v_imagen"];
+		$this->imagen->AdvancedSearch->SearchValue2 = @$filter["y_imagen"];
+		$this->imagen->AdvancedSearch->SearchOperator2 = @$filter["w_imagen"];
+		$this->imagen->AdvancedSearch->Save();
+
+		// Field accesoDirecto
+		$this->accesoDirecto->AdvancedSearch->SearchValue = @$filter["x_accesoDirecto"];
+		$this->accesoDirecto->AdvancedSearch->SearchOperator = @$filter["z_accesoDirecto"];
+		$this->accesoDirecto->AdvancedSearch->SearchCondition = @$filter["v_accesoDirecto"];
+		$this->accesoDirecto->AdvancedSearch->SearchValue2 = @$filter["y_accesoDirecto"];
+		$this->accesoDirecto->AdvancedSearch->SearchOperator2 = @$filter["w_accesoDirecto"];
+		$this->accesoDirecto->AdvancedSearch->Save();
 		$this->BasicSearch->setKeyword(@$filter[EW_TABLE_BASIC_SEARCH]);
 		$this->BasicSearch->setType(@$filter[EW_TABLE_BASIC_SEARCH_TYPE]);
 	}
@@ -761,6 +781,7 @@ class cp_menu_list extends c_menu {
 	function BasicSearchSQL($arKeywords, $type) {
 		$sWhere = "";
 		$this->BuildBasicSearchSQL($sWhere, $this->denominacion, $arKeywords, $type);
+		$this->BuildBasicSearchSQL($sWhere, $this->imagen, $arKeywords, $type);
 		return $sWhere;
 	}
 
@@ -927,6 +948,8 @@ class cp_menu_list extends c_menu {
 			$this->CurrentOrderType = @$_GET["ordertype"];
 			$this->UpdateSort($this->denominacion); // denominacion
 			$this->UpdateSort($this->orden); // orden
+			$this->UpdateSort($this->imagen); // imagen
+			$this->UpdateSort($this->accesoDirecto); // accesoDirecto
 			$this->setStartRecordNumber(1); // Reset start position
 		}
 	}
@@ -963,6 +986,8 @@ class cp_menu_list extends c_menu {
 				$this->setSessionOrderBy($sOrderBy);
 				$this->denominacion->setSort("");
 				$this->orden->setSort("");
+				$this->imagen->setSort("");
+				$this->accesoDirecto->setSort("");
 			}
 
 			// Reset start position
@@ -1413,6 +1438,9 @@ class cp_menu_list extends c_menu {
 		$this->id->setDbValue($rs->fields('id'));
 		$this->denominacion->setDbValue($rs->fields('denominacion'));
 		$this->orden->setDbValue($rs->fields('orden'));
+		$this->imagen->Upload->DbValue = $rs->fields('imagen');
+		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
+		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
 	}
 
 	// Load DbValue from recordset
@@ -1422,6 +1450,8 @@ class cp_menu_list extends c_menu {
 		$this->id->DbValue = $row['id'];
 		$this->denominacion->DbValue = $row['denominacion'];
 		$this->orden->DbValue = $row['orden'];
+		$this->imagen->Upload->DbValue = $row['imagen'];
+		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
 	}
 
 	// Load old record
@@ -1473,6 +1503,8 @@ class cp_menu_list extends c_menu {
 
 		// denominacion
 		// orden
+		// imagen
+		// accesoDirecto
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
 
@@ -1484,6 +1516,22 @@ class cp_menu_list extends c_menu {
 		$this->orden->ViewValue = $this->orden->CurrentValue;
 		$this->orden->ViewCustomAttributes = "";
 
+		// imagen
+		if (!ew_Empty($this->imagen->Upload->DbValue)) {
+			$this->imagen->ViewValue = $this->imagen->Upload->DbValue;
+		} else {
+			$this->imagen->ViewValue = "";
+		}
+		$this->imagen->ViewCustomAttributes = "";
+
+		// accesoDirecto
+		if (strval($this->accesoDirecto->CurrentValue) <> "") {
+			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
+		} else {
+			$this->accesoDirecto->ViewValue = NULL;
+		}
+		$this->accesoDirecto->ViewCustomAttributes = "";
+
 			// denominacion
 			$this->denominacion->LinkCustomAttributes = "";
 			$this->denominacion->HrefValue = "";
@@ -1493,6 +1541,17 @@ class cp_menu_list extends c_menu {
 			$this->orden->LinkCustomAttributes = "";
 			$this->orden->HrefValue = "";
 			$this->orden->TooltipValue = "";
+
+			// imagen
+			$this->imagen->LinkCustomAttributes = "";
+			$this->imagen->HrefValue = "";
+			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
+			$this->imagen->TooltipValue = "";
+
+			// accesoDirecto
+			$this->accesoDirecto->LinkCustomAttributes = "";
+			$this->accesoDirecto->HrefValue = "";
+			$this->accesoDirecto->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -1687,8 +1746,10 @@ f_menulist.ValidateRequired = false;
 <?php } ?>
 
 // Dynamic selection lists
-// Form object for search
+f_menulist.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
+f_menulist.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
 
+// Form object for search
 var CurrentSearchForm = f_menulistsrch = new ew_Form("f_menulistsrch");
 </script>
 <script type="text/javascript">
@@ -1868,6 +1929,24 @@ $p_menu_list->ListOptions->Render("header", "left");
         </div></div></th>
 	<?php } ?>
 <?php } ?>		
+<?php if ($_menu->imagen->Visible) { // imagen ?>
+	<?php if ($_menu->SortUrl($_menu->imagen) == "") { ?>
+		<th data-name="imagen"><div id="elh__menu_imagen" class="_menu_imagen"><div class="ewTableHeaderCaption"><?php echo $_menu->imagen->FldCaption() ?></div></div></th>
+	<?php } else { ?>
+		<th data-name="imagen"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->imagen) ?>',1);"><div id="elh__menu_imagen" class="_menu_imagen">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->imagen->FldCaption() ?><?php echo $Language->Phrase("SrchLegend") ?></span><span class="ewTableHeaderSort"><?php if ($_menu->imagen->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->imagen->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+        </div></div></th>
+	<?php } ?>
+<?php } ?>		
+<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
+	<?php if ($_menu->SortUrl($_menu->accesoDirecto) == "") { ?>
+		<th data-name="accesoDirecto"><div id="elh__menu_accesoDirecto" class="_menu_accesoDirecto"><div class="ewTableHeaderCaption"><?php echo $_menu->accesoDirecto->FldCaption() ?></div></div></th>
+	<?php } else { ?>
+		<th data-name="accesoDirecto"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->accesoDirecto) ?>',1);"><div id="elh__menu_accesoDirecto" class="_menu_accesoDirecto">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->accesoDirecto->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($_menu->accesoDirecto->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->accesoDirecto->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+        </div></div></th>
+	<?php } ?>
+<?php } ?>		
 <?php
 
 // Render list options (header, right)
@@ -1946,6 +2025,23 @@ $p_menu_list->ListOptions->Render("body", "left", $p_menu_list->RowCnt);
 <span id="el<?php echo $p_menu_list->RowCnt ?>__menu_orden" class="_menu_orden">
 <span<?php echo $_menu->orden->ViewAttributes() ?>>
 <?php echo $_menu->orden->ListViewValue() ?></span>
+</span>
+</td>
+	<?php } ?>
+	<?php if ($_menu->imagen->Visible) { // imagen ?>
+		<td data-name="imagen"<?php echo $_menu->imagen->CellAttributes() ?>>
+<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_imagen" class="_menu_imagen">
+<span<?php echo $_menu->imagen->ViewAttributes() ?>>
+<?php echo ew_GetFileViewTag($_menu->imagen, $_menu->imagen->ListViewValue()) ?>
+</span>
+</span>
+</td>
+	<?php } ?>
+	<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
+		<td data-name="accesoDirecto"<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
+<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_accesoDirecto" class="_menu_accesoDirecto">
+<span<?php echo $_menu->accesoDirecto->ViewAttributes() ?>>
+<?php echo $_menu->accesoDirecto->ListViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>
