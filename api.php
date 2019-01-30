@@ -336,6 +336,7 @@ function obtenerItemsMenu($idmenu){
 	'blog' AS tipo
 	FROM categorias_blog
 	INNER JOIN menu ON categorias_blog.idMenu = menu.id
+	AND menu.id = '".$idmenu."'
 	UNION
 	SELECT
 	paginas_estaticas.id,
@@ -347,7 +348,7 @@ function obtenerItemsMenu($idmenu){
 	'estatica' AS tipo
 	FROM paginas_estaticas
 	INNER JOIN menu ON paginas_estaticas.idMenu = menu.id
-	WHERE menu.id = '".$idmenu."'
+	AND menu.id = '".$idmenu."'
 	ORDER BY ordenmenu, orden, denominacion";
 
 	return consulta($sql);	
