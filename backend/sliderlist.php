@@ -5,7 +5,7 @@ ob_start(); // Turn on output buffering
 <?php include_once "ewcfg13.php" ?>
 <?php include_once ((EW_USE_ADODB) ? "adodb5/adodb.inc.php" : "ewmysql13.php") ?>
 <?php include_once "phpfn13.php" ?>
-<?php include_once "_menuinfo.php" ?>
+<?php include_once "sliderinfo.php" ?>
 <?php include_once "usuariosinfo.php" ?>
 <?php include_once "userfn13.php" ?>
 <?php
@@ -14,9 +14,9 @@ ob_start(); // Turn on output buffering
 // Page class
 //
 
-$p_menu_list = NULL; // Initialize page object first
+$slider_list = NULL; // Initialize page object first
 
-class cp_menu_list extends c_menu {
+class cslider_list extends cslider {
 
 	// Page ID
 	var $PageID = 'list';
@@ -25,13 +25,13 @@ class cp_menu_list extends c_menu {
 	var $ProjectID = "{B4028305-4D6B-4D03-8DB3-7403E0DBC5D2}";
 
 	// Table name
-	var $TableName = 'menu';
+	var $TableName = 'slider';
 
 	// Page object name
-	var $PageObjName = 'p_menu_list';
+	var $PageObjName = 'slider_list';
 
 	// Grid form hidden field names
-	var $FormName = 'f_menulist';
+	var $FormName = 'fsliderlist';
 	var $FormActionName = 'k_action';
 	var $FormKeyName = 'k_key';
 	var $FormOldKeyName = 'k_oldkey';
@@ -266,10 +266,10 @@ class cp_menu_list extends c_menu {
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (_menu)
-		if (!isset($GLOBALS["_menu"]) || get_class($GLOBALS["_menu"]) == "c_menu") {
-			$GLOBALS["_menu"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["_menu"];
+		// Table object (slider)
+		if (!isset($GLOBALS["slider"]) || get_class($GLOBALS["slider"]) == "cslider") {
+			$GLOBALS["slider"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["slider"];
 		}
 
 		// Initialize URLs
@@ -280,12 +280,12 @@ class cp_menu_list extends c_menu {
 		$this->ExportXmlUrl = $this->PageUrl() . "export=xml";
 		$this->ExportCsvUrl = $this->PageUrl() . "export=csv";
 		$this->ExportPdfUrl = $this->PageUrl() . "export=pdf";
-		$this->AddUrl = "_menuadd.php";
+		$this->AddUrl = "slideradd.php";
 		$this->InlineAddUrl = $this->PageUrl() . "a=add";
 		$this->GridAddUrl = $this->PageUrl() . "a=gridadd";
 		$this->GridEditUrl = $this->PageUrl() . "a=gridedit";
-		$this->MultiDeleteUrl = "_menudelete.php";
-		$this->MultiUpdateUrl = "_menuupdate.php";
+		$this->MultiDeleteUrl = "sliderdelete.php";
+		$this->MultiUpdateUrl = "sliderupdate.php";
 
 		// Table object (usuarios)
 		if (!isset($GLOBALS['usuarios'])) $GLOBALS['usuarios'] = new cusuarios();
@@ -296,7 +296,7 @@ class cp_menu_list extends c_menu {
 
 		// Table name (for backward compatibility)
 		if (!defined("EW_TABLE_NAME"))
-			define("EW_TABLE_NAME", 'menu', TRUE);
+			define("EW_TABLE_NAME", 'slider', TRUE);
 
 		// Start timer
 		if (!isset($GLOBALS["gTimer"])) $GLOBALS["gTimer"] = new cTimer();
@@ -333,7 +333,7 @@ class cp_menu_list extends c_menu {
 		// Filter options
 		$this->FilterOptions = new cListOptions();
 		$this->FilterOptions->Tag = "div";
-		$this->FilterOptions->TagClassName = "ewFilterOption f_menulistsrch";
+		$this->FilterOptions->TagClassName = "ewFilterOption fsliderlistsrch";
 
 		// List actions
 		$this->ListActions = new cListActions();
@@ -370,10 +370,10 @@ class cp_menu_list extends c_menu {
 
 		// Set up list options
 		$this->SetupListOptions();
-		$this->denominacion->SetVisibility();
-		$this->orden->SetVisibility();
 		$this->imagen->SetVisibility();
-		$this->accesoDirecto->SetVisibility();
+		$this->titulo->SetVisibility();
+		$this->subtitulo->SetVisibility();
+		$this->link->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -434,13 +434,13 @@ class cp_menu_list extends c_menu {
 		Page_Unloaded();
 
 		// Export
-		global $EW_EXPORT, $_menu;
+		global $EW_EXPORT, $slider;
 		if ($this->CustomExport <> "" && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EW_EXPORT)) {
 				$sContent = ob_get_contents();
 			if ($gsExportFile == "") $gsExportFile = $this->TableVar;
 			$class = $EW_EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($_menu);
+				$doc = new $class($slider);
 				$doc->Text = $sContent;
 				if ($this->Export == "email")
 					echo $this->ExportEmail($doc->Text);
@@ -556,28 +556,8 @@ class cp_menu_list extends c_menu {
 					$option->HideAllOptions();
 			}
 
-			// Get default search criteria
-			ew_AddFilter($this->DefaultSearchWhere, $this->BasicSearchWhere(TRUE));
-
-			// Get basic search values
-			$this->LoadBasicSearchValues();
-
-			// Process filter list
-			$this->ProcessFilterList();
-
-			// Restore search parms from Session if not searching / reset / export
-			if (($this->Export <> "" || $this->Command <> "search" && $this->Command <> "reset" && $this->Command <> "resetall") && $this->CheckSearchParms())
-				$this->RestoreSearchParms();
-
-			// Call Recordset SearchValidated event
-			$this->Recordset_SearchValidated();
-
 			// Set up sorting order
 			$this->SetUpSortOrder();
-
-			// Get basic search criteria
-			if ($gsSearchError == "")
-				$sSrchBasic = $this->BasicSearchWhere();
 		}
 
 		// Restore display records
@@ -589,31 +569,6 @@ class cp_menu_list extends c_menu {
 
 		// Load Sorting Order
 		$this->LoadSortOrder();
-
-		// Load search default if no existing search criteria
-		if (!$this->CheckSearchParms()) {
-
-			// Load basic search from default
-			$this->BasicSearch->LoadDefault();
-			if ($this->BasicSearch->Keyword != "")
-				$sSrchBasic = $this->BasicSearchWhere();
-		}
-
-		// Build search criteria
-		ew_AddFilter($this->SearchWhere, $sSrchAdvanced);
-		ew_AddFilter($this->SearchWhere, $sSrchBasic);
-
-		// Call Recordset_Searching event
-		$this->Recordset_Searching($this->SearchWhere);
-
-		// Save search criteria
-		if ($this->Command == "search" && !$this->RestoreSearch) {
-			$this->setSearchWhere($this->SearchWhere); // Save to Session
-			$this->StartRec = 1; // Reset start record counter
-			$this->setStartRecordNumber($this->StartRec);
-		} else {
-			$this->SearchWhere = $this->getSearchWhere();
-		}
 
 		// Build filter
 		$sFilter = "";
@@ -679,266 +634,6 @@ class cp_menu_list extends c_menu {
 		return TRUE;
 	}
 
-	// Get list of filters
-	function GetFilterList() {
-		global $UserProfile;
-
-		// Load server side filters
-		if (EW_SEARCH_FILTER_OPTION == "Server") {
-			$sSavedFilterList = $UserProfile->GetSearchFilters(CurrentUserName(), "f_menulistsrch");
-		} else {
-			$sSavedFilterList = "";
-		}
-
-		// Initialize
-		$sFilterList = "";
-		$sFilterList = ew_Concat($sFilterList, $this->id->AdvancedSearch->ToJSON(), ","); // Field id
-		$sFilterList = ew_Concat($sFilterList, $this->denominacion->AdvancedSearch->ToJSON(), ","); // Field denominacion
-		$sFilterList = ew_Concat($sFilterList, $this->orden->AdvancedSearch->ToJSON(), ","); // Field orden
-		$sFilterList = ew_Concat($sFilterList, $this->imagen->AdvancedSearch->ToJSON(), ","); // Field imagen
-		$sFilterList = ew_Concat($sFilterList, $this->accesoDirecto->AdvancedSearch->ToJSON(), ","); // Field accesoDirecto
-		if ($this->BasicSearch->Keyword <> "") {
-			$sWrk = "\"" . EW_TABLE_BASIC_SEARCH . "\":\"" . ew_JsEncode2($this->BasicSearch->Keyword) . "\",\"" . EW_TABLE_BASIC_SEARCH_TYPE . "\":\"" . ew_JsEncode2($this->BasicSearch->Type) . "\"";
-			$sFilterList = ew_Concat($sFilterList, $sWrk, ",");
-		}
-		$sFilterList = preg_replace('/,$/', "", $sFilterList);
-
-		// Return filter list in json
-		if ($sFilterList <> "")
-			$sFilterList = "\"data\":{" . $sFilterList . "}";
-		if ($sSavedFilterList <> "") {
-			if ($sFilterList <> "")
-				$sFilterList .= ",";
-			$sFilterList .= "\"filters\":" . $sSavedFilterList;
-		}
-		return ($sFilterList <> "") ? "{" . $sFilterList . "}" : "null";
-	}
-
-	// Process filter list
-	function ProcessFilterList() {
-		global $UserProfile;
-		if (@$_POST["cmd"] == "savefilters") {
-			$filters = ew_StripSlashes(@$_POST["filters"]);
-			$UserProfile->SetSearchFilters(CurrentUserName(), "f_menulistsrch", $filters);
-		} elseif (@$_POST["cmd"] == "resetfilter") {
-			$this->RestoreFilterList();
-		}
-	}
-
-	// Restore list of filters
-	function RestoreFilterList() {
-
-		// Return if not reset filter
-		if (@$_POST["cmd"] <> "resetfilter")
-			return FALSE;
-		$filter = json_decode(ew_StripSlashes(@$_POST["filter"]), TRUE);
-		$this->Command = "search";
-
-		// Field id
-		$this->id->AdvancedSearch->SearchValue = @$filter["x_id"];
-		$this->id->AdvancedSearch->SearchOperator = @$filter["z_id"];
-		$this->id->AdvancedSearch->SearchCondition = @$filter["v_id"];
-		$this->id->AdvancedSearch->SearchValue2 = @$filter["y_id"];
-		$this->id->AdvancedSearch->SearchOperator2 = @$filter["w_id"];
-		$this->id->AdvancedSearch->Save();
-
-		// Field denominacion
-		$this->denominacion->AdvancedSearch->SearchValue = @$filter["x_denominacion"];
-		$this->denominacion->AdvancedSearch->SearchOperator = @$filter["z_denominacion"];
-		$this->denominacion->AdvancedSearch->SearchCondition = @$filter["v_denominacion"];
-		$this->denominacion->AdvancedSearch->SearchValue2 = @$filter["y_denominacion"];
-		$this->denominacion->AdvancedSearch->SearchOperator2 = @$filter["w_denominacion"];
-		$this->denominacion->AdvancedSearch->Save();
-
-		// Field orden
-		$this->orden->AdvancedSearch->SearchValue = @$filter["x_orden"];
-		$this->orden->AdvancedSearch->SearchOperator = @$filter["z_orden"];
-		$this->orden->AdvancedSearch->SearchCondition = @$filter["v_orden"];
-		$this->orden->AdvancedSearch->SearchValue2 = @$filter["y_orden"];
-		$this->orden->AdvancedSearch->SearchOperator2 = @$filter["w_orden"];
-		$this->orden->AdvancedSearch->Save();
-
-		// Field imagen
-		$this->imagen->AdvancedSearch->SearchValue = @$filter["x_imagen"];
-		$this->imagen->AdvancedSearch->SearchOperator = @$filter["z_imagen"];
-		$this->imagen->AdvancedSearch->SearchCondition = @$filter["v_imagen"];
-		$this->imagen->AdvancedSearch->SearchValue2 = @$filter["y_imagen"];
-		$this->imagen->AdvancedSearch->SearchOperator2 = @$filter["w_imagen"];
-		$this->imagen->AdvancedSearch->Save();
-
-		// Field accesoDirecto
-		$this->accesoDirecto->AdvancedSearch->SearchValue = @$filter["x_accesoDirecto"];
-		$this->accesoDirecto->AdvancedSearch->SearchOperator = @$filter["z_accesoDirecto"];
-		$this->accesoDirecto->AdvancedSearch->SearchCondition = @$filter["v_accesoDirecto"];
-		$this->accesoDirecto->AdvancedSearch->SearchValue2 = @$filter["y_accesoDirecto"];
-		$this->accesoDirecto->AdvancedSearch->SearchOperator2 = @$filter["w_accesoDirecto"];
-		$this->accesoDirecto->AdvancedSearch->Save();
-		$this->BasicSearch->setKeyword(@$filter[EW_TABLE_BASIC_SEARCH]);
-		$this->BasicSearch->setType(@$filter[EW_TABLE_BASIC_SEARCH_TYPE]);
-	}
-
-	// Return basic search SQL
-	function BasicSearchSQL($arKeywords, $type) {
-		$sWhere = "";
-		$this->BuildBasicSearchSQL($sWhere, $this->denominacion, $arKeywords, $type);
-		$this->BuildBasicSearchSQL($sWhere, $this->imagen, $arKeywords, $type);
-		return $sWhere;
-	}
-
-	// Build basic search SQL
-	function BuildBasicSearchSql(&$Where, &$Fld, $arKeywords, $type) {
-		$sDefCond = ($type == "OR") ? "OR" : "AND";
-		$arSQL = array(); // Array for SQL parts
-		$arCond = array(); // Array for search conditions
-		$cnt = count($arKeywords);
-		$j = 0; // Number of SQL parts
-		for ($i = 0; $i < $cnt; $i++) {
-			$Keyword = $arKeywords[$i];
-			$Keyword = trim($Keyword);
-			if (EW_BASIC_SEARCH_IGNORE_PATTERN <> "") {
-				$Keyword = preg_replace(EW_BASIC_SEARCH_IGNORE_PATTERN, "\\", $Keyword);
-				$ar = explode("\\", $Keyword);
-			} else {
-				$ar = array($Keyword);
-			}
-			foreach ($ar as $Keyword) {
-				if ($Keyword <> "") {
-					$sWrk = "";
-					if ($Keyword == "OR" && $type == "") {
-						if ($j > 0)
-							$arCond[$j-1] = "OR";
-					} elseif ($Keyword == EW_NULL_VALUE) {
-						$sWrk = $Fld->FldExpression . " IS NULL";
-					} elseif ($Keyword == EW_NOT_NULL_VALUE) {
-						$sWrk = $Fld->FldExpression . " IS NOT NULL";
-					} elseif ($Fld->FldIsVirtual && $Fld->FldVirtualSearch) {
-						$sWrk = $Fld->FldVirtualExpression . ew_Like(ew_QuotedValue("%" . $Keyword . "%", EW_DATATYPE_STRING, $this->DBID), $this->DBID);
-					} elseif ($Fld->FldDataType != EW_DATATYPE_NUMBER || is_numeric($Keyword)) {
-						$sWrk = $Fld->FldBasicSearchExpression . ew_Like(ew_QuotedValue("%" . $Keyword . "%", EW_DATATYPE_STRING, $this->DBID), $this->DBID);
-					}
-					if ($sWrk <> "") {
-						$arSQL[$j] = $sWrk;
-						$arCond[$j] = $sDefCond;
-						$j += 1;
-					}
-				}
-			}
-		}
-		$cnt = count($arSQL);
-		$bQuoted = FALSE;
-		$sSql = "";
-		if ($cnt > 0) {
-			for ($i = 0; $i < $cnt-1; $i++) {
-				if ($arCond[$i] == "OR") {
-					if (!$bQuoted) $sSql .= "(";
-					$bQuoted = TRUE;
-				}
-				$sSql .= $arSQL[$i];
-				if ($bQuoted && $arCond[$i] <> "OR") {
-					$sSql .= ")";
-					$bQuoted = FALSE;
-				}
-				$sSql .= " " . $arCond[$i] . " ";
-			}
-			$sSql .= $arSQL[$cnt-1];
-			if ($bQuoted)
-				$sSql .= ")";
-		}
-		if ($sSql <> "") {
-			if ($Where <> "") $Where .= " OR ";
-			$Where .=  "(" . $sSql . ")";
-		}
-	}
-
-	// Return basic search WHERE clause based on search keyword and type
-	function BasicSearchWhere($Default = FALSE) {
-		global $Security;
-		$sSearchStr = "";
-		if (!$Security->CanSearch()) return "";
-		$sSearchKeyword = ($Default) ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
-		$sSearchType = ($Default) ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
-		if ($sSearchKeyword <> "") {
-			$sSearch = trim($sSearchKeyword);
-			if ($sSearchType <> "=") {
-				$ar = array();
-
-				// Match quoted keywords (i.e.: "...")
-				if (preg_match_all('/"([^"]*)"/i', $sSearch, $matches, PREG_SET_ORDER)) {
-					foreach ($matches as $match) {
-						$p = strpos($sSearch, $match[0]);
-						$str = substr($sSearch, 0, $p);
-						$sSearch = substr($sSearch, $p + strlen($match[0]));
-						if (strlen(trim($str)) > 0)
-							$ar = array_merge($ar, explode(" ", trim($str)));
-						$ar[] = $match[1]; // Save quoted keyword
-					}
-				}
-
-				// Match individual keywords
-				if (strlen(trim($sSearch)) > 0)
-					$ar = array_merge($ar, explode(" ", trim($sSearch)));
-
-				// Search keyword in any fields
-				if (($sSearchType == "OR" || $sSearchType == "AND") && $this->BasicSearch->BasicSearchAnyFields) {
-					foreach ($ar as $sKeyword) {
-						if ($sKeyword <> "") {
-							if ($sSearchStr <> "") $sSearchStr .= " " . $sSearchType . " ";
-							$sSearchStr .= "(" . $this->BasicSearchSQL(array($sKeyword), $sSearchType) . ")";
-						}
-					}
-				} else {
-					$sSearchStr = $this->BasicSearchSQL($ar, $sSearchType);
-				}
-			} else {
-				$sSearchStr = $this->BasicSearchSQL(array($sSearch), $sSearchType);
-			}
-			if (!$Default) $this->Command = "search";
-		}
-		if (!$Default && $this->Command == "search") {
-			$this->BasicSearch->setKeyword($sSearchKeyword);
-			$this->BasicSearch->setType($sSearchType);
-		}
-		return $sSearchStr;
-	}
-
-	// Check if search parm exists
-	function CheckSearchParms() {
-
-		// Check basic search
-		if ($this->BasicSearch->IssetSession())
-			return TRUE;
-		return FALSE;
-	}
-
-	// Clear all search parameters
-	function ResetSearchParms() {
-
-		// Clear search WHERE clause
-		$this->SearchWhere = "";
-		$this->setSearchWhere($this->SearchWhere);
-
-		// Clear basic search parameters
-		$this->ResetBasicSearchParms();
-	}
-
-	// Load advanced search default values
-	function LoadAdvancedSearchDefault() {
-		return FALSE;
-	}
-
-	// Clear all basic search parameters
-	function ResetBasicSearchParms() {
-		$this->BasicSearch->UnsetSession();
-	}
-
-	// Restore all search parameters
-	function RestoreSearchParms() {
-		$this->RestoreSearch = TRUE;
-
-		// Restore basic search values
-		$this->BasicSearch->Load();
-	}
-
 	// Set up sort parameters
 	function SetUpSortOrder() {
 
@@ -946,10 +641,10 @@ class cp_menu_list extends c_menu {
 		if (@$_GET["order"] <> "") {
 			$this->CurrentOrder = ew_StripSlashes(@$_GET["order"]);
 			$this->CurrentOrderType = @$_GET["ordertype"];
-			$this->UpdateSort($this->denominacion); // denominacion
-			$this->UpdateSort($this->orden); // orden
 			$this->UpdateSort($this->imagen); // imagen
-			$this->UpdateSort($this->accesoDirecto); // accesoDirecto
+			$this->UpdateSort($this->titulo); // titulo
+			$this->UpdateSort($this->subtitulo); // subtitulo
+			$this->UpdateSort($this->link); // link
 			$this->setStartRecordNumber(1); // Reset start position
 		}
 	}
@@ -961,8 +656,6 @@ class cp_menu_list extends c_menu {
 			if ($this->getSqlOrderBy() <> "") {
 				$sOrderBy = $this->getSqlOrderBy();
 				$this->setSessionOrderBy($sOrderBy);
-				$this->orden->setSort("ASC");
-				$this->denominacion->setSort("ASC");
 			}
 		}
 	}
@@ -976,18 +669,14 @@ class cp_menu_list extends c_menu {
 		// Check if reset command
 		if (substr($this->Command,0,5) == "reset") {
 
-			// Reset search criteria
-			if ($this->Command == "reset" || $this->Command == "resetall")
-				$this->ResetSearchParms();
-
 			// Reset sorting order
 			if ($this->Command == "resetsort") {
 				$sOrderBy = "";
 				$this->setSessionOrderBy($sOrderBy);
-				$this->denominacion->setSort("");
-				$this->orden->setSort("");
 				$this->imagen->setSort("");
-				$this->accesoDirecto->setSort("");
+				$this->titulo->setSort("");
+				$this->subtitulo->setSort("");
+				$this->link->setSort("");
 			}
 
 			// Reset start position
@@ -1016,12 +705,6 @@ class cp_menu_list extends c_menu {
 		$item = &$this->ListOptions->Add("edit");
 		$item->CssStyle = "white-space: nowrap;";
 		$item->Visible = $Security->CanEdit();
-		$item->OnLeft = TRUE;
-
-		// "copy"
-		$item = &$this->ListOptions->Add("copy");
-		$item->CssStyle = "white-space: nowrap;";
-		$item->Visible = $Security->CanAdd();
 		$item->OnLeft = TRUE;
 
 		// "delete"
@@ -1082,15 +765,6 @@ class cp_menu_list extends c_menu {
 		$editcaption = ew_HtmlTitle($Language->Phrase("EditLink"));
 		if ($Security->CanEdit()) {
 			$oListOpt->Body = "<a class=\"ewRowLink ewEdit\" title=\"" . ew_HtmlTitle($Language->Phrase("EditLink")) . "\" data-caption=\"" . ew_HtmlTitle($Language->Phrase("EditLink")) . "\" href=\"" . ew_HtmlEncode($this->EditUrl) . "\">" . $Language->Phrase("EditLink") . "</a>";
-		} else {
-			$oListOpt->Body = "";
-		}
-
-		// "copy"
-		$oListOpt = &$this->ListOptions->Items["copy"];
-		$copycaption = ew_HtmlTitle($Language->Phrase("CopyLink"));
-		if ($Security->CanAdd()) {
-			$oListOpt->Body = "<a class=\"ewRowLink ewCopy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . ew_HtmlEncode($this->CopyUrl) . "\">" . $Language->Phrase("CopyLink") . "</a>";
 		} else {
 			$oListOpt->Body = "";
 		}
@@ -1169,11 +843,11 @@ class cp_menu_list extends c_menu {
 
 		// Filter button
 		$item = &$this->FilterOptions->Add("savecurrentfilter");
-		$item->Body = "<a class=\"ewSaveFilter\" data-form=\"f_menulistsrch\" href=\"#\">" . $Language->Phrase("SaveCurrentFilter") . "</a>";
-		$item->Visible = TRUE;
+		$item->Body = "<a class=\"ewSaveFilter\" data-form=\"fsliderlistsrch\" href=\"#\">" . $Language->Phrase("SaveCurrentFilter") . "</a>";
+		$item->Visible = FALSE;
 		$item = &$this->FilterOptions->Add("deletefilter");
-		$item->Body = "<a class=\"ewDeleteFilter\" data-form=\"f_menulistsrch\" href=\"#\">" . $Language->Phrase("DeleteFilter") . "</a>";
-		$item->Visible = TRUE;
+		$item->Body = "<a class=\"ewDeleteFilter\" data-form=\"fsliderlistsrch\" href=\"#\">" . $Language->Phrase("DeleteFilter") . "</a>";
+		$item->Visible = FALSE;
 		$this->FilterOptions->UseDropDownButton = TRUE;
 		$this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
 		$this->FilterOptions->DropDownButtonPhrase = $Language->Phrase("Filters");
@@ -1196,7 +870,7 @@ class cp_menu_list extends c_menu {
 					$item = &$option->Add("custom_" . $listaction->Action);
 					$caption = $listaction->Caption;
 					$icon = ($listaction->Icon <> "") ? "<span class=\"" . ew_HtmlEncode($listaction->Icon) . "\" data-caption=\"" . ew_HtmlEncode($caption) . "\"></span> " : $caption;
-					$item->Body = "<a class=\"ewAction ewListAction\" title=\"" . ew_HtmlEncode($caption) . "\" data-caption=\"" . ew_HtmlEncode($caption) . "\" href=\"\" onclick=\"ew_SubmitAction(event,jQuery.extend({f:document.f_menulist}," . $listaction->ToJson(TRUE) . "));return false;\">" . $icon . "</a>";
+					$item->Body = "<a class=\"ewAction ewListAction\" title=\"" . ew_HtmlEncode($caption) . "\" data-caption=\"" . ew_HtmlEncode($caption) . "\" href=\"\" onclick=\"ew_SubmitAction(event,jQuery.extend({f:document.fsliderlist}," . $listaction->ToJson(TRUE) . "));return false;\">" . $icon . "</a>";
 					$item->Visible = $listaction->Allow;
 				}
 			}
@@ -1297,17 +971,6 @@ class cp_menu_list extends c_menu {
 		$this->SearchOptions->Tag = "div";
 		$this->SearchOptions->TagClassName = "ewSearchOption";
 
-		// Search button
-		$item = &$this->SearchOptions->Add("searchtoggle");
-		$SearchToggleClass = ($this->SearchWhere <> "") ? " active" : " active";
-		$item->Body = "<button type=\"button\" class=\"btn btn-default ewSearchToggle" . $SearchToggleClass . "\" title=\"" . $Language->Phrase("SearchPanel") . "\" data-caption=\"" . $Language->Phrase("SearchPanel") . "\" data-toggle=\"button\" data-form=\"f_menulistsrch\">" . $Language->Phrase("SearchBtn") . "</button>";
-		$item->Visible = TRUE;
-
-		// Show all button
-		$item = &$this->SearchOptions->Add("showall");
-		$item->Body = "<a class=\"btn btn-default ewShowAll\" title=\"" . $Language->Phrase("ShowAll") . "\" data-caption=\"" . $Language->Phrase("ShowAll") . "\" href=\"" . $this->PageUrl() . "cmd=reset\">" . $Language->Phrase("ShowAllBtn") . "</a>";
-		$item->Visible = ($this->SearchWhere <> $this->DefaultSearchWhere && $this->SearchWhere <> "0=101");
-
 		// Button group for search
 		$this->SearchOptions->UseDropDownButton = FALSE;
 		$this->SearchOptions->UseImageAndText = TRUE;
@@ -1373,13 +1036,6 @@ class cp_menu_list extends c_menu {
 		}
 	}
 
-	// Load basic search values
-	function LoadBasicSearchValues() {
-		$this->BasicSearch->Keyword = @$_GET[EW_TABLE_BASIC_SEARCH];
-		if ($this->BasicSearch->Keyword <> "") $this->Command = "search";
-		$this->BasicSearch->Type = @$_GET[EW_TABLE_BASIC_SEARCH_TYPE];
-	}
-
 	// Load recordset
 	function LoadRecordset($offset = -1, $rowcnt = -1) {
 
@@ -1436,11 +1092,12 @@ class cp_menu_list extends c_menu {
 		$row = &$rs->fields;
 		$this->Row_Selected($row);
 		$this->id->setDbValue($rs->fields('id'));
-		$this->denominacion->setDbValue($rs->fields('denominacion'));
-		$this->orden->setDbValue($rs->fields('orden'));
 		$this->imagen->Upload->DbValue = $rs->fields('imagen');
 		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
-		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
+		$this->informacion->setDbValue($rs->fields('informacion'));
+		$this->titulo->setDbValue($rs->fields('titulo'));
+		$this->subtitulo->setDbValue($rs->fields('subtitulo'));
+		$this->link->setDbValue($rs->fields('link'));
 	}
 
 	// Load DbValue from recordset
@@ -1448,10 +1105,11 @@ class cp_menu_list extends c_menu {
 		if (!$rs || !is_array($rs) && $rs->EOF) return;
 		$row = is_array($rs) ? $rs : $rs->fields;
 		$this->id->DbValue = $row['id'];
-		$this->denominacion->DbValue = $row['denominacion'];
-		$this->orden->DbValue = $row['orden'];
 		$this->imagen->Upload->DbValue = $row['imagen'];
-		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
+		$this->informacion->DbValue = $row['informacion'];
+		$this->titulo->DbValue = $row['titulo'];
+		$this->subtitulo->DbValue = $row['subtitulo'];
+		$this->link->DbValue = $row['link'];
 	}
 
 	// Load old record
@@ -1489,10 +1147,6 @@ class cp_menu_list extends c_menu {
 		$this->InlineCopyUrl = $this->GetInlineCopyUrl();
 		$this->DeleteUrl = $this->GetDeleteUrl();
 
-		// Convert decimal values if posted back
-		if ($this->orden->FormValue == $this->orden->CurrentValue && is_numeric(ew_StrToFloat($this->orden->CurrentValue)))
-			$this->orden->CurrentValue = ew_StrToFloat($this->orden->CurrentValue);
-
 		// Call Row_Rendering event
 		$this->Row_Rendering();
 
@@ -1501,20 +1155,13 @@ class cp_menu_list extends c_menu {
 
 		$this->id->CellCssStyle = "white-space: nowrap;";
 
-		// denominacion
-		// orden
 		// imagen
-		// accesoDirecto
+		// informacion
+		// titulo
+		// subtitulo
+		// link
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
-
-		// denominacion
-		$this->denominacion->ViewValue = $this->denominacion->CurrentValue;
-		$this->denominacion->ViewCustomAttributes = "";
-
-		// orden
-		$this->orden->ViewValue = $this->orden->CurrentValue;
-		$this->orden->ViewCustomAttributes = "";
 
 		// imagen
 		if (!ew_Empty($this->imagen->Upload->DbValue)) {
@@ -1524,23 +1171,17 @@ class cp_menu_list extends c_menu {
 		}
 		$this->imagen->ViewCustomAttributes = "";
 
-		// accesoDirecto
-		if (strval($this->accesoDirecto->CurrentValue) <> "") {
-			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
-		} else {
-			$this->accesoDirecto->ViewValue = NULL;
-		}
-		$this->accesoDirecto->ViewCustomAttributes = "";
+		// titulo
+		$this->titulo->ViewValue = $this->titulo->CurrentValue;
+		$this->titulo->ViewCustomAttributes = "";
 
-			// denominacion
-			$this->denominacion->LinkCustomAttributes = "";
-			$this->denominacion->HrefValue = "";
-			$this->denominacion->TooltipValue = "";
+		// subtitulo
+		$this->subtitulo->ViewValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->ViewCustomAttributes = "";
 
-			// orden
-			$this->orden->LinkCustomAttributes = "";
-			$this->orden->HrefValue = "";
-			$this->orden->TooltipValue = "";
+		// link
+		$this->link->ViewValue = $this->link->CurrentValue;
+		$this->link->ViewCustomAttributes = "";
 
 			// imagen
 			$this->imagen->LinkCustomAttributes = "";
@@ -1548,10 +1189,20 @@ class cp_menu_list extends c_menu {
 			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 			$this->imagen->TooltipValue = "";
 
-			// accesoDirecto
-			$this->accesoDirecto->LinkCustomAttributes = "";
-			$this->accesoDirecto->HrefValue = "";
-			$this->accesoDirecto->TooltipValue = "";
+			// titulo
+			$this->titulo->LinkCustomAttributes = "";
+			$this->titulo->HrefValue = "";
+			$this->titulo->TooltipValue = "";
+
+			// subtitulo
+			$this->subtitulo->LinkCustomAttributes = "";
+			$this->subtitulo->HrefValue = "";
+			$this->subtitulo->TooltipValue = "";
+
+			// link
+			$this->link->LinkCustomAttributes = "";
+			$this->link->HrefValue = "";
+			$this->link->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -1708,30 +1359,30 @@ class cp_menu_list extends c_menu {
 <?php
 
 // Create page object
-if (!isset($p_menu_list)) $p_menu_list = new cp_menu_list();
+if (!isset($slider_list)) $slider_list = new cslider_list();
 
 // Page init
-$p_menu_list->Page_Init();
+$slider_list->Page_Init();
 
 // Page main
-$p_menu_list->Page_Main();
+$slider_list->Page_Main();
 
 // Global Page Rendering event (in userfn*.php)
 Page_Rendering();
 
 // Page Rendering event
-$p_menu_list->Page_Render();
+$slider_list->Page_Render();
 ?>
 <?php include_once "header.php" ?>
 <script type="text/javascript">
 
 // Form object
 var CurrentPageID = EW_PAGE_ID = "list";
-var CurrentForm = f_menulist = new ew_Form("f_menulist", "list");
-f_menulist.FormKeyCountName = '<?php echo $p_menu_list->FormKeyCountName ?>';
+var CurrentForm = fsliderlist = new ew_Form("fsliderlist", "list");
+fsliderlist.FormKeyCountName = '<?php echo $slider_list->FormKeyCountName ?>';
 
 // Form_CustomValidate event
-f_menulist.Form_CustomValidate = 
+fsliderlist.Form_CustomValidate = 
  function(fobj) { // DO NOT CHANGE THIS LINE!
 
  	// Your custom validation code here, return false if invalid. 
@@ -1740,17 +1391,14 @@ f_menulist.Form_CustomValidate =
 
 // Use JavaScript validation or not
 <?php if (EW_CLIENT_VALIDATE) { ?>
-f_menulist.ValidateRequired = true;
+fsliderlist.ValidateRequired = true;
 <?php } else { ?>
-f_menulist.ValidateRequired = false; 
+fsliderlist.ValidateRequired = false; 
 <?php } ?>
 
 // Dynamic selection lists
-f_menulist.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
-f_menulist.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
-
 // Form object for search
-var CurrentSearchForm = f_menulistsrch = new ew_Form("f_menulistsrch");
+
 </script>
 <script type="text/javascript">
 
@@ -1758,309 +1406,274 @@ var CurrentSearchForm = f_menulistsrch = new ew_Form("f_menulistsrch");
 </script>
 <div class="ewToolbar">
 <?php $Breadcrumb->Render(); ?>
-<?php if ($p_menu_list->TotalRecs > 0 && $p_menu_list->ExportOptions->Visible()) { ?>
-<?php $p_menu_list->ExportOptions->Render("body") ?>
-<?php } ?>
-<?php if ($p_menu_list->SearchOptions->Visible()) { ?>
-<?php $p_menu_list->SearchOptions->Render("body") ?>
-<?php } ?>
-<?php if ($p_menu_list->FilterOptions->Visible()) { ?>
-<?php $p_menu_list->FilterOptions->Render("body") ?>
+<?php if ($slider_list->TotalRecs > 0 && $slider_list->ExportOptions->Visible()) { ?>
+<?php $slider_list->ExportOptions->Render("body") ?>
 <?php } ?>
 <?php echo $Language->SelectionForm(); ?>
 <div class="clearfix"></div>
 </div>
 <?php
-	$bSelectLimit = $p_menu_list->UseSelectLimit;
+	$bSelectLimit = $slider_list->UseSelectLimit;
 	if ($bSelectLimit) {
-		if ($p_menu_list->TotalRecs <= 0)
-			$p_menu_list->TotalRecs = $_menu->SelectRecordCount();
+		if ($slider_list->TotalRecs <= 0)
+			$slider_list->TotalRecs = $slider->SelectRecordCount();
 	} else {
-		if (!$p_menu_list->Recordset && ($p_menu_list->Recordset = $p_menu_list->LoadRecordset()))
-			$p_menu_list->TotalRecs = $p_menu_list->Recordset->RecordCount();
+		if (!$slider_list->Recordset && ($slider_list->Recordset = $slider_list->LoadRecordset()))
+			$slider_list->TotalRecs = $slider_list->Recordset->RecordCount();
 	}
-	$p_menu_list->StartRec = 1;
-	if ($p_menu_list->DisplayRecs <= 0 || ($_menu->Export <> "" && $_menu->ExportAll)) // Display all records
-		$p_menu_list->DisplayRecs = $p_menu_list->TotalRecs;
-	if (!($_menu->Export <> "" && $_menu->ExportAll))
-		$p_menu_list->SetUpStartRec(); // Set up start record position
+	$slider_list->StartRec = 1;
+	if ($slider_list->DisplayRecs <= 0 || ($slider->Export <> "" && $slider->ExportAll)) // Display all records
+		$slider_list->DisplayRecs = $slider_list->TotalRecs;
+	if (!($slider->Export <> "" && $slider->ExportAll))
+		$slider_list->SetUpStartRec(); // Set up start record position
 	if ($bSelectLimit)
-		$p_menu_list->Recordset = $p_menu_list->LoadRecordset($p_menu_list->StartRec-1, $p_menu_list->DisplayRecs);
+		$slider_list->Recordset = $slider_list->LoadRecordset($slider_list->StartRec-1, $slider_list->DisplayRecs);
 
 	// Set no record found message
-	if ($_menu->CurrentAction == "" && $p_menu_list->TotalRecs == 0) {
+	if ($slider->CurrentAction == "" && $slider_list->TotalRecs == 0) {
 		if (!$Security->CanList())
-			$p_menu_list->setWarningMessage(ew_DeniedMsg());
-		if ($p_menu_list->SearchWhere == "0=101")
-			$p_menu_list->setWarningMessage($Language->Phrase("EnterSearchCriteria"));
+			$slider_list->setWarningMessage(ew_DeniedMsg());
+		if ($slider_list->SearchWhere == "0=101")
+			$slider_list->setWarningMessage($Language->Phrase("EnterSearchCriteria"));
 		else
-			$p_menu_list->setWarningMessage($Language->Phrase("NoRecord"));
+			$slider_list->setWarningMessage($Language->Phrase("NoRecord"));
 	}
-$p_menu_list->RenderOtherOptions();
+$slider_list->RenderOtherOptions();
 ?>
-<?php if ($Security->CanSearch()) { ?>
-<?php if ($_menu->Export == "" && $_menu->CurrentAction == "") { ?>
-<form name="f_menulistsrch" id="f_menulistsrch" class="form-inline ewForm" action="<?php echo ew_CurrentPage() ?>">
-<?php $SearchPanelClass = ($p_menu_list->SearchWhere <> "") ? " in" : " in"; ?>
-<div id="f_menulistsrch_SearchPanel" class="ewSearchPanel collapse<?php echo $SearchPanelClass ?>">
-<input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="_menu">
-	<div class="ewBasicSearch">
-<div id="xsr_1" class="ewRow">
-	<div class="ewQuickSearch input-group">
-	<input type="text" name="<?php echo EW_TABLE_BASIC_SEARCH ?>" id="<?php echo EW_TABLE_BASIC_SEARCH ?>" class="form-control" value="<?php echo ew_HtmlEncode($p_menu_list->BasicSearch->getKeyword()) ?>" placeholder="<?php echo ew_HtmlEncode($Language->Phrase("Search")) ?>">
-	<input type="hidden" name="<?php echo EW_TABLE_BASIC_SEARCH_TYPE ?>" id="<?php echo EW_TABLE_BASIC_SEARCH_TYPE ?>" value="<?php echo ew_HtmlEncode($p_menu_list->BasicSearch->getType()) ?>">
-	<div class="input-group-btn">
-		<button type="button" data-toggle="dropdown" class="btn btn-default"><span id="searchtype"><?php echo $p_menu_list->BasicSearch->getTypeNameShort() ?></span><span class="caret"></span></button>
-		<ul class="dropdown-menu pull-right" role="menu">
-			<li<?php if ($p_menu_list->BasicSearch->getType() == "") echo " class=\"active\""; ?>><a href="javascript:void(0);" onclick="ew_SetSearchType(this)"><?php echo $Language->Phrase("QuickSearchAuto") ?></a></li>
-			<li<?php if ($p_menu_list->BasicSearch->getType() == "=") echo " class=\"active\""; ?>><a href="javascript:void(0);" onclick="ew_SetSearchType(this,'=')"><?php echo $Language->Phrase("QuickSearchExact") ?></a></li>
-			<li<?php if ($p_menu_list->BasicSearch->getType() == "AND") echo " class=\"active\""; ?>><a href="javascript:void(0);" onclick="ew_SetSearchType(this,'AND')"><?php echo $Language->Phrase("QuickSearchAll") ?></a></li>
-			<li<?php if ($p_menu_list->BasicSearch->getType() == "OR") echo " class=\"active\""; ?>><a href="javascript:void(0);" onclick="ew_SetSearchType(this,'OR')"><?php echo $Language->Phrase("QuickSearchAny") ?></a></li>
-		</ul>
-	<button class="btn btn-primary ewButton" name="btnsubmit" id="btnsubmit" type="submit"><?php echo $Language->Phrase("QuickSearchBtn") ?></button>
-	</div>
-	</div>
-</div>
-	</div>
-</div>
-</form>
-<?php } ?>
-<?php } ?>
-<?php $p_menu_list->ShowPageHeader(); ?>
+<?php $slider_list->ShowPageHeader(); ?>
 <?php
-$p_menu_list->ShowMessage();
+$slider_list->ShowMessage();
 ?>
-<?php if ($p_menu_list->TotalRecs > 0 || $_menu->CurrentAction <> "") { ?>
-<div class="panel panel-default ewGrid _menu">
+<?php if ($slider_list->TotalRecs > 0 || $slider->CurrentAction <> "") { ?>
+<div class="panel panel-default ewGrid slider">
 <div class="panel-heading ewGridUpperPanel">
-<?php if ($_menu->CurrentAction <> "gridadd" && $_menu->CurrentAction <> "gridedit") { ?>
+<?php if ($slider->CurrentAction <> "gridadd" && $slider->CurrentAction <> "gridedit") { ?>
 <form name="ewPagerForm" class="form-inline ewForm ewPagerForm" action="<?php echo ew_CurrentPage() ?>">
-<?php if (!isset($p_menu_list->Pager)) $p_menu_list->Pager = new cPrevNextPager($p_menu_list->StartRec, $p_menu_list->DisplayRecs, $p_menu_list->TotalRecs) ?>
-<?php if ($p_menu_list->Pager->RecordCount > 0 && $p_menu_list->Pager->Visible) { ?>
+<?php if (!isset($slider_list->Pager)) $slider_list->Pager = new cPrevNextPager($slider_list->StartRec, $slider_list->DisplayRecs, $slider_list->TotalRecs) ?>
+<?php if ($slider_list->Pager->RecordCount > 0 && $slider_list->Pager->Visible) { ?>
 <div class="ewPager">
 <span><?php echo $Language->Phrase("Page") ?>&nbsp;</span>
 <div class="ewPrevNext"><div class="input-group">
 <div class="input-group-btn">
 <!--first page button-->
-	<?php if ($p_menu_list->Pager->FirstButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerFirst") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->FirstButton->Start ?>"><span class="icon-first ewIcon"></span></a>
+	<?php if ($slider_list->Pager->FirstButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerFirst") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->FirstButton->Start ?>"><span class="icon-first ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerFirst") ?>"><span class="icon-first ewIcon"></span></a>
 	<?php } ?>
 <!--previous page button-->
-	<?php if ($p_menu_list->Pager->PrevButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerPrevious") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->PrevButton->Start ?>"><span class="icon-prev ewIcon"></span></a>
+	<?php if ($slider_list->Pager->PrevButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerPrevious") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->PrevButton->Start ?>"><span class="icon-prev ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerPrevious") ?>"><span class="icon-prev ewIcon"></span></a>
 	<?php } ?>
 </div>
 <!--current page number-->
-	<input class="form-control input-sm" type="text" name="<?php echo EW_TABLE_PAGE_NO ?>" value="<?php echo $p_menu_list->Pager->CurrentPage ?>">
+	<input class="form-control input-sm" type="text" name="<?php echo EW_TABLE_PAGE_NO ?>" value="<?php echo $slider_list->Pager->CurrentPage ?>">
 <div class="input-group-btn">
 <!--next page button-->
-	<?php if ($p_menu_list->Pager->NextButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerNext") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->NextButton->Start ?>"><span class="icon-next ewIcon"></span></a>
+	<?php if ($slider_list->Pager->NextButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerNext") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->NextButton->Start ?>"><span class="icon-next ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerNext") ?>"><span class="icon-next ewIcon"></span></a>
 	<?php } ?>
 <!--last page button-->
-	<?php if ($p_menu_list->Pager->LastButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerLast") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->LastButton->Start ?>"><span class="icon-last ewIcon"></span></a>
+	<?php if ($slider_list->Pager->LastButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerLast") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->LastButton->Start ?>"><span class="icon-last ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerLast") ?>"><span class="icon-last ewIcon"></span></a>
 	<?php } ?>
 </div>
 </div>
 </div>
-<span>&nbsp;<?php echo $Language->Phrase("of") ?>&nbsp;<?php echo $p_menu_list->Pager->PageCount ?></span>
+<span>&nbsp;<?php echo $Language->Phrase("of") ?>&nbsp;<?php echo $slider_list->Pager->PageCount ?></span>
 </div>
 <div class="ewPager ewRec">
-	<span><?php echo $Language->Phrase("Record") ?>&nbsp;<?php echo $p_menu_list->Pager->FromIndex ?>&nbsp;<?php echo $Language->Phrase("To") ?>&nbsp;<?php echo $p_menu_list->Pager->ToIndex ?>&nbsp;<?php echo $Language->Phrase("Of") ?>&nbsp;<?php echo $p_menu_list->Pager->RecordCount ?></span>
+	<span><?php echo $Language->Phrase("Record") ?>&nbsp;<?php echo $slider_list->Pager->FromIndex ?>&nbsp;<?php echo $Language->Phrase("To") ?>&nbsp;<?php echo $slider_list->Pager->ToIndex ?>&nbsp;<?php echo $Language->Phrase("Of") ?>&nbsp;<?php echo $slider_list->Pager->RecordCount ?></span>
 </div>
 <?php } ?>
 </form>
 <?php } ?>
 <div class="ewListOtherOptions">
 <?php
-	foreach ($p_menu_list->OtherOptions as &$option)
+	foreach ($slider_list->OtherOptions as &$option)
 		$option->Render("body");
 ?>
 </div>
 <div class="clearfix"></div>
 </div>
-<form name="f_menulist" id="f_menulist" class="form-inline ewForm ewListForm" action="<?php echo ew_CurrentPage() ?>" method="post">
-<?php if ($p_menu_list->CheckToken) { ?>
-<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $p_menu_list->Token ?>">
+<form name="fsliderlist" id="fsliderlist" class="form-inline ewForm ewListForm" action="<?php echo ew_CurrentPage() ?>" method="post">
+<?php if ($slider_list->CheckToken) { ?>
+<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $slider_list->Token ?>">
 <?php } ?>
-<input type="hidden" name="t" value="_menu">
-<div id="gmp__menu" class="<?php if (ew_IsResponsiveLayout()) { echo "table-responsive "; } ?>ewGridMiddlePanel">
-<?php if ($p_menu_list->TotalRecs > 0) { ?>
-<table id="tbl__menulist" class="table ewTable">
-<?php echo $_menu->TableCustomInnerHtml ?>
+<input type="hidden" name="t" value="slider">
+<div id="gmp_slider" class="<?php if (ew_IsResponsiveLayout()) { echo "table-responsive "; } ?>ewGridMiddlePanel">
+<?php if ($slider_list->TotalRecs > 0) { ?>
+<table id="tbl_sliderlist" class="table ewTable">
+<?php echo $slider->TableCustomInnerHtml ?>
 <thead><!-- Table header -->
 	<tr class="ewTableHeader">
 <?php
 
 // Header row
-$p_menu_list->RowType = EW_ROWTYPE_HEADER;
+$slider_list->RowType = EW_ROWTYPE_HEADER;
 
 // Render list options
-$p_menu_list->RenderListOptions();
+$slider_list->RenderListOptions();
 
 // Render list options (header, left)
-$p_menu_list->ListOptions->Render("header", "left");
+$slider_list->ListOptions->Render("header", "left");
 ?>
-<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-	<?php if ($_menu->SortUrl($_menu->denominacion) == "") { ?>
-		<th data-name="denominacion"><div id="elh__menu_denominacion" class="_menu_denominacion"><div class="ewTableHeaderCaption"><?php echo $_menu->denominacion->FldCaption() ?></div></div></th>
+<?php if ($slider->imagen->Visible) { // imagen ?>
+	<?php if ($slider->SortUrl($slider->imagen) == "") { ?>
+		<th data-name="imagen"><div id="elh_slider_imagen" class="slider_imagen"><div class="ewTableHeaderCaption"><?php echo $slider->imagen->FldCaption() ?></div></div></th>
 	<?php } else { ?>
-		<th data-name="denominacion"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->denominacion) ?>',1);"><div id="elh__menu_denominacion" class="_menu_denominacion">
-			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->denominacion->FldCaption() ?><?php echo $Language->Phrase("SrchLegend") ?></span><span class="ewTableHeaderSort"><?php if ($_menu->denominacion->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->denominacion->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+		<th data-name="imagen"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $slider->SortUrl($slider->imagen) ?>',1);"><div id="elh_slider_imagen" class="slider_imagen">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $slider->imagen->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($slider->imagen->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($slider->imagen->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
         </div></div></th>
 	<?php } ?>
 <?php } ?>		
-<?php if ($_menu->orden->Visible) { // orden ?>
-	<?php if ($_menu->SortUrl($_menu->orden) == "") { ?>
-		<th data-name="orden"><div id="elh__menu_orden" class="_menu_orden"><div class="ewTableHeaderCaption"><?php echo $_menu->orden->FldCaption() ?></div></div></th>
+<?php if ($slider->titulo->Visible) { // titulo ?>
+	<?php if ($slider->SortUrl($slider->titulo) == "") { ?>
+		<th data-name="titulo"><div id="elh_slider_titulo" class="slider_titulo"><div class="ewTableHeaderCaption"><?php echo $slider->titulo->FldCaption() ?></div></div></th>
 	<?php } else { ?>
-		<th data-name="orden"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->orden) ?>',1);"><div id="elh__menu_orden" class="_menu_orden">
-			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->orden->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($_menu->orden->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->orden->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+		<th data-name="titulo"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $slider->SortUrl($slider->titulo) ?>',1);"><div id="elh_slider_titulo" class="slider_titulo">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $slider->titulo->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($slider->titulo->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($slider->titulo->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
         </div></div></th>
 	<?php } ?>
 <?php } ?>		
-<?php if ($_menu->imagen->Visible) { // imagen ?>
-	<?php if ($_menu->SortUrl($_menu->imagen) == "") { ?>
-		<th data-name="imagen"><div id="elh__menu_imagen" class="_menu_imagen"><div class="ewTableHeaderCaption"><?php echo $_menu->imagen->FldCaption() ?></div></div></th>
+<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+	<?php if ($slider->SortUrl($slider->subtitulo) == "") { ?>
+		<th data-name="subtitulo"><div id="elh_slider_subtitulo" class="slider_subtitulo"><div class="ewTableHeaderCaption"><?php echo $slider->subtitulo->FldCaption() ?></div></div></th>
 	<?php } else { ?>
-		<th data-name="imagen"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->imagen) ?>',1);"><div id="elh__menu_imagen" class="_menu_imagen">
-			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->imagen->FldCaption() ?><?php echo $Language->Phrase("SrchLegend") ?></span><span class="ewTableHeaderSort"><?php if ($_menu->imagen->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->imagen->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+		<th data-name="subtitulo"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $slider->SortUrl($slider->subtitulo) ?>',1);"><div id="elh_slider_subtitulo" class="slider_subtitulo">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $slider->subtitulo->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($slider->subtitulo->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($slider->subtitulo->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
         </div></div></th>
 	<?php } ?>
 <?php } ?>		
-<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-	<?php if ($_menu->SortUrl($_menu->accesoDirecto) == "") { ?>
-		<th data-name="accesoDirecto"><div id="elh__menu_accesoDirecto" class="_menu_accesoDirecto"><div class="ewTableHeaderCaption"><?php echo $_menu->accesoDirecto->FldCaption() ?></div></div></th>
+<?php if ($slider->link->Visible) { // link ?>
+	<?php if ($slider->SortUrl($slider->link) == "") { ?>
+		<th data-name="link"><div id="elh_slider_link" class="slider_link"><div class="ewTableHeaderCaption"><?php echo $slider->link->FldCaption() ?></div></div></th>
 	<?php } else { ?>
-		<th data-name="accesoDirecto"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $_menu->SortUrl($_menu->accesoDirecto) ?>',1);"><div id="elh__menu_accesoDirecto" class="_menu_accesoDirecto">
-			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $_menu->accesoDirecto->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($_menu->accesoDirecto->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($_menu->accesoDirecto->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
+		<th data-name="link"><div class="ewPointer" onclick="ew_Sort(event,'<?php echo $slider->SortUrl($slider->link) ?>',1);"><div id="elh_slider_link" class="slider_link">
+			<div class="ewTableHeaderBtn"><span class="ewTableHeaderCaption"><?php echo $slider->link->FldCaption() ?></span><span class="ewTableHeaderSort"><?php if ($slider->link->getSort() == "ASC") { ?><span class="caret ewSortUp"></span><?php } elseif ($slider->link->getSort() == "DESC") { ?><span class="caret"></span><?php } ?></span></div>
         </div></div></th>
 	<?php } ?>
 <?php } ?>		
 <?php
 
 // Render list options (header, right)
-$p_menu_list->ListOptions->Render("header", "right");
+$slider_list->ListOptions->Render("header", "right");
 ?>
 	</tr>
 </thead>
 <tbody>
 <?php
-if ($_menu->ExportAll && $_menu->Export <> "") {
-	$p_menu_list->StopRec = $p_menu_list->TotalRecs;
+if ($slider->ExportAll && $slider->Export <> "") {
+	$slider_list->StopRec = $slider_list->TotalRecs;
 } else {
 
 	// Set the last record to display
-	if ($p_menu_list->TotalRecs > $p_menu_list->StartRec + $p_menu_list->DisplayRecs - 1)
-		$p_menu_list->StopRec = $p_menu_list->StartRec + $p_menu_list->DisplayRecs - 1;
+	if ($slider_list->TotalRecs > $slider_list->StartRec + $slider_list->DisplayRecs - 1)
+		$slider_list->StopRec = $slider_list->StartRec + $slider_list->DisplayRecs - 1;
 	else
-		$p_menu_list->StopRec = $p_menu_list->TotalRecs;
+		$slider_list->StopRec = $slider_list->TotalRecs;
 }
-$p_menu_list->RecCnt = $p_menu_list->StartRec - 1;
-if ($p_menu_list->Recordset && !$p_menu_list->Recordset->EOF) {
-	$p_menu_list->Recordset->MoveFirst();
-	$bSelectLimit = $p_menu_list->UseSelectLimit;
-	if (!$bSelectLimit && $p_menu_list->StartRec > 1)
-		$p_menu_list->Recordset->Move($p_menu_list->StartRec - 1);
-} elseif (!$_menu->AllowAddDeleteRow && $p_menu_list->StopRec == 0) {
-	$p_menu_list->StopRec = $_menu->GridAddRowCount;
+$slider_list->RecCnt = $slider_list->StartRec - 1;
+if ($slider_list->Recordset && !$slider_list->Recordset->EOF) {
+	$slider_list->Recordset->MoveFirst();
+	$bSelectLimit = $slider_list->UseSelectLimit;
+	if (!$bSelectLimit && $slider_list->StartRec > 1)
+		$slider_list->Recordset->Move($slider_list->StartRec - 1);
+} elseif (!$slider->AllowAddDeleteRow && $slider_list->StopRec == 0) {
+	$slider_list->StopRec = $slider->GridAddRowCount;
 }
 
 // Initialize aggregate
-$_menu->RowType = EW_ROWTYPE_AGGREGATEINIT;
-$_menu->ResetAttrs();
-$p_menu_list->RenderRow();
-while ($p_menu_list->RecCnt < $p_menu_list->StopRec) {
-	$p_menu_list->RecCnt++;
-	if (intval($p_menu_list->RecCnt) >= intval($p_menu_list->StartRec)) {
-		$p_menu_list->RowCnt++;
+$slider->RowType = EW_ROWTYPE_AGGREGATEINIT;
+$slider->ResetAttrs();
+$slider_list->RenderRow();
+while ($slider_list->RecCnt < $slider_list->StopRec) {
+	$slider_list->RecCnt++;
+	if (intval($slider_list->RecCnt) >= intval($slider_list->StartRec)) {
+		$slider_list->RowCnt++;
 
 		// Set up key count
-		$p_menu_list->KeyCount = $p_menu_list->RowIndex;
+		$slider_list->KeyCount = $slider_list->RowIndex;
 
 		// Init row class and style
-		$_menu->ResetAttrs();
-		$_menu->CssClass = "";
-		if ($_menu->CurrentAction == "gridadd") {
+		$slider->ResetAttrs();
+		$slider->CssClass = "";
+		if ($slider->CurrentAction == "gridadd") {
 		} else {
-			$p_menu_list->LoadRowValues($p_menu_list->Recordset); // Load row values
+			$slider_list->LoadRowValues($slider_list->Recordset); // Load row values
 		}
-		$_menu->RowType = EW_ROWTYPE_VIEW; // Render view
+		$slider->RowType = EW_ROWTYPE_VIEW; // Render view
 
 		// Set up row id / data-rowindex
-		$_menu->RowAttrs = array_merge($_menu->RowAttrs, array('data-rowindex'=>$p_menu_list->RowCnt, 'id'=>'r' . $p_menu_list->RowCnt . '__menu', 'data-rowtype'=>$_menu->RowType));
+		$slider->RowAttrs = array_merge($slider->RowAttrs, array('data-rowindex'=>$slider_list->RowCnt, 'id'=>'r' . $slider_list->RowCnt . '_slider', 'data-rowtype'=>$slider->RowType));
 
 		// Render row
-		$p_menu_list->RenderRow();
+		$slider_list->RenderRow();
 
 		// Render list options
-		$p_menu_list->RenderListOptions();
+		$slider_list->RenderListOptions();
 ?>
-	<tr<?php echo $_menu->RowAttributes() ?>>
+	<tr<?php echo $slider->RowAttributes() ?>>
 <?php
 
 // Render list options (body, left)
-$p_menu_list->ListOptions->Render("body", "left", $p_menu_list->RowCnt);
+$slider_list->ListOptions->Render("body", "left", $slider_list->RowCnt);
 ?>
-	<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-		<td data-name="denominacion"<?php echo $_menu->denominacion->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_denominacion" class="_menu_denominacion">
-<span<?php echo $_menu->denominacion->ViewAttributes() ?>>
-<?php echo $_menu->denominacion->ListViewValue() ?></span>
+	<?php if ($slider->imagen->Visible) { // imagen ?>
+		<td data-name="imagen"<?php echo $slider->imagen->CellAttributes() ?>>
+<span id="el<?php echo $slider_list->RowCnt ?>_slider_imagen" class="slider_imagen">
+<span<?php echo $slider->imagen->ViewAttributes() ?>>
+<?php echo ew_GetFileViewTag($slider->imagen, $slider->imagen->ListViewValue()) ?>
 </span>
-<a id="<?php echo $p_menu_list->PageObjName . "_row_" . $p_menu_list->RowCnt ?>"></a></td>
+</span>
+<a id="<?php echo $slider_list->PageObjName . "_row_" . $slider_list->RowCnt ?>"></a></td>
 	<?php } ?>
-	<?php if ($_menu->orden->Visible) { // orden ?>
-		<td data-name="orden"<?php echo $_menu->orden->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_orden" class="_menu_orden">
-<span<?php echo $_menu->orden->ViewAttributes() ?>>
-<?php echo $_menu->orden->ListViewValue() ?></span>
+	<?php if ($slider->titulo->Visible) { // titulo ?>
+		<td data-name="titulo"<?php echo $slider->titulo->CellAttributes() ?>>
+<span id="el<?php echo $slider_list->RowCnt ?>_slider_titulo" class="slider_titulo">
+<span<?php echo $slider->titulo->ViewAttributes() ?>>
+<?php echo $slider->titulo->ListViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>
-	<?php if ($_menu->imagen->Visible) { // imagen ?>
-		<td data-name="imagen"<?php echo $_menu->imagen->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_imagen" class="_menu_imagen">
-<span<?php echo $_menu->imagen->ViewAttributes() ?>>
-<?php echo ew_GetFileViewTag($_menu->imagen, $_menu->imagen->ListViewValue()) ?>
-</span>
+	<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+		<td data-name="subtitulo"<?php echo $slider->subtitulo->CellAttributes() ?>>
+<span id="el<?php echo $slider_list->RowCnt ?>_slider_subtitulo" class="slider_subtitulo">
+<span<?php echo $slider->subtitulo->ViewAttributes() ?>>
+<?php echo $slider->subtitulo->ListViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>
-	<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-		<td data-name="accesoDirecto"<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_list->RowCnt ?>__menu_accesoDirecto" class="_menu_accesoDirecto">
-<span<?php echo $_menu->accesoDirecto->ViewAttributes() ?>>
-<?php echo $_menu->accesoDirecto->ListViewValue() ?></span>
+	<?php if ($slider->link->Visible) { // link ?>
+		<td data-name="link"<?php echo $slider->link->CellAttributes() ?>>
+<span id="el<?php echo $slider_list->RowCnt ?>_slider_link" class="slider_link">
+<span<?php echo $slider->link->ViewAttributes() ?>>
+<?php echo $slider->link->ListViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>
 <?php
 
 // Render list options (body, right)
-$p_menu_list->ListOptions->Render("body", "right", $p_menu_list->RowCnt);
+$slider_list->ListOptions->Render("body", "right", $slider_list->RowCnt);
 ?>
 	</tr>
 <?php
 	}
-	if ($_menu->CurrentAction <> "gridadd")
-		$p_menu_list->Recordset->MoveNext();
+	if ($slider->CurrentAction <> "gridadd")
+		$slider_list->Recordset->MoveNext();
 }
 ?>
 </tbody>
 </table>
 <?php } ?>
-<?php if ($_menu->CurrentAction == "") { ?>
+<?php if ($slider->CurrentAction == "") { ?>
 <input type="hidden" name="a_list" id="a_list" value="">
 <?php } ?>
 </div>
@@ -2068,60 +1681,60 @@ $p_menu_list->ListOptions->Render("body", "right", $p_menu_list->RowCnt);
 <?php
 
 // Close recordset
-if ($p_menu_list->Recordset)
-	$p_menu_list->Recordset->Close();
+if ($slider_list->Recordset)
+	$slider_list->Recordset->Close();
 ?>
 <div class="panel-footer ewGridLowerPanel">
-<?php if ($_menu->CurrentAction <> "gridadd" && $_menu->CurrentAction <> "gridedit") { ?>
+<?php if ($slider->CurrentAction <> "gridadd" && $slider->CurrentAction <> "gridedit") { ?>
 <form name="ewPagerForm" class="ewForm form-inline ewPagerForm" action="<?php echo ew_CurrentPage() ?>">
-<?php if (!isset($p_menu_list->Pager)) $p_menu_list->Pager = new cPrevNextPager($p_menu_list->StartRec, $p_menu_list->DisplayRecs, $p_menu_list->TotalRecs) ?>
-<?php if ($p_menu_list->Pager->RecordCount > 0 && $p_menu_list->Pager->Visible) { ?>
+<?php if (!isset($slider_list->Pager)) $slider_list->Pager = new cPrevNextPager($slider_list->StartRec, $slider_list->DisplayRecs, $slider_list->TotalRecs) ?>
+<?php if ($slider_list->Pager->RecordCount > 0 && $slider_list->Pager->Visible) { ?>
 <div class="ewPager">
 <span><?php echo $Language->Phrase("Page") ?>&nbsp;</span>
 <div class="ewPrevNext"><div class="input-group">
 <div class="input-group-btn">
 <!--first page button-->
-	<?php if ($p_menu_list->Pager->FirstButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerFirst") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->FirstButton->Start ?>"><span class="icon-first ewIcon"></span></a>
+	<?php if ($slider_list->Pager->FirstButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerFirst") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->FirstButton->Start ?>"><span class="icon-first ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerFirst") ?>"><span class="icon-first ewIcon"></span></a>
 	<?php } ?>
 <!--previous page button-->
-	<?php if ($p_menu_list->Pager->PrevButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerPrevious") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->PrevButton->Start ?>"><span class="icon-prev ewIcon"></span></a>
+	<?php if ($slider_list->Pager->PrevButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerPrevious") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->PrevButton->Start ?>"><span class="icon-prev ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerPrevious") ?>"><span class="icon-prev ewIcon"></span></a>
 	<?php } ?>
 </div>
 <!--current page number-->
-	<input class="form-control input-sm" type="text" name="<?php echo EW_TABLE_PAGE_NO ?>" value="<?php echo $p_menu_list->Pager->CurrentPage ?>">
+	<input class="form-control input-sm" type="text" name="<?php echo EW_TABLE_PAGE_NO ?>" value="<?php echo $slider_list->Pager->CurrentPage ?>">
 <div class="input-group-btn">
 <!--next page button-->
-	<?php if ($p_menu_list->Pager->NextButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerNext") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->NextButton->Start ?>"><span class="icon-next ewIcon"></span></a>
+	<?php if ($slider_list->Pager->NextButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerNext") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->NextButton->Start ?>"><span class="icon-next ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerNext") ?>"><span class="icon-next ewIcon"></span></a>
 	<?php } ?>
 <!--last page button-->
-	<?php if ($p_menu_list->Pager->LastButton->Enabled) { ?>
-	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerLast") ?>" href="<?php echo $p_menu_list->PageUrl() ?>start=<?php echo $p_menu_list->Pager->LastButton->Start ?>"><span class="icon-last ewIcon"></span></a>
+	<?php if ($slider_list->Pager->LastButton->Enabled) { ?>
+	<a class="btn btn-default btn-sm" title="<?php echo $Language->Phrase("PagerLast") ?>" href="<?php echo $slider_list->PageUrl() ?>start=<?php echo $slider_list->Pager->LastButton->Start ?>"><span class="icon-last ewIcon"></span></a>
 	<?php } else { ?>
 	<a class="btn btn-default btn-sm disabled" title="<?php echo $Language->Phrase("PagerLast") ?>"><span class="icon-last ewIcon"></span></a>
 	<?php } ?>
 </div>
 </div>
 </div>
-<span>&nbsp;<?php echo $Language->Phrase("of") ?>&nbsp;<?php echo $p_menu_list->Pager->PageCount ?></span>
+<span>&nbsp;<?php echo $Language->Phrase("of") ?>&nbsp;<?php echo $slider_list->Pager->PageCount ?></span>
 </div>
 <div class="ewPager ewRec">
-	<span><?php echo $Language->Phrase("Record") ?>&nbsp;<?php echo $p_menu_list->Pager->FromIndex ?>&nbsp;<?php echo $Language->Phrase("To") ?>&nbsp;<?php echo $p_menu_list->Pager->ToIndex ?>&nbsp;<?php echo $Language->Phrase("Of") ?>&nbsp;<?php echo $p_menu_list->Pager->RecordCount ?></span>
+	<span><?php echo $Language->Phrase("Record") ?>&nbsp;<?php echo $slider_list->Pager->FromIndex ?>&nbsp;<?php echo $Language->Phrase("To") ?>&nbsp;<?php echo $slider_list->Pager->ToIndex ?>&nbsp;<?php echo $Language->Phrase("Of") ?>&nbsp;<?php echo $slider_list->Pager->RecordCount ?></span>
 </div>
 <?php } ?>
 </form>
 <?php } ?>
 <div class="ewListOtherOptions">
 <?php
-	foreach ($p_menu_list->OtherOptions as &$option)
+	foreach ($slider_list->OtherOptions as &$option)
 		$option->Render("body", "bottom");
 ?>
 </div>
@@ -2129,10 +1742,10 @@ if ($p_menu_list->Recordset)
 </div>
 </div>
 <?php } ?>
-<?php if ($p_menu_list->TotalRecs == 0 && $_menu->CurrentAction == "") { // Show other options ?>
+<?php if ($slider_list->TotalRecs == 0 && $slider->CurrentAction == "") { // Show other options ?>
 <div class="ewListOtherOptions">
 <?php
-	foreach ($p_menu_list->OtherOptions as &$option) {
+	foreach ($slider_list->OtherOptions as &$option) {
 		$option->ButtonClass = "";
 		$option->Render("body", "");
 	}
@@ -2141,12 +1754,10 @@ if ($p_menu_list->Recordset)
 <div class="clearfix"></div>
 <?php } ?>
 <script type="text/javascript">
-f_menulistsrch.FilterList = <?php echo $p_menu_list->GetFilterList() ?>;
-f_menulistsrch.Init();
-f_menulist.Init();
+fsliderlist.Init();
 </script>
 <?php
-$p_menu_list->ShowPageFooter();
+$slider_list->ShowPageFooter();
 if (EW_DEBUG_ENABLED)
 	echo ew_DebugMsg();
 ?>
@@ -2158,5 +1769,5 @@ if (EW_DEBUG_ENABLED)
 </script>
 <?php include_once "footer.php" ?>
 <?php
-$p_menu_list->Page_Terminate();
+$slider_list->Page_Terminate();
 ?>

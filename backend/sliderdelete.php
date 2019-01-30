@@ -5,7 +5,7 @@ ob_start(); // Turn on output buffering
 <?php include_once "ewcfg13.php" ?>
 <?php include_once ((EW_USE_ADODB) ? "adodb5/adodb.inc.php" : "ewmysql13.php") ?>
 <?php include_once "phpfn13.php" ?>
-<?php include_once "_menuinfo.php" ?>
+<?php include_once "sliderinfo.php" ?>
 <?php include_once "usuariosinfo.php" ?>
 <?php include_once "userfn13.php" ?>
 <?php
@@ -14,9 +14,9 @@ ob_start(); // Turn on output buffering
 // Page class
 //
 
-$p_menu_delete = NULL; // Initialize page object first
+$slider_delete = NULL; // Initialize page object first
 
-class cp_menu_delete extends c_menu {
+class cslider_delete extends cslider {
 
 	// Page ID
 	var $PageID = 'delete';
@@ -25,10 +25,10 @@ class cp_menu_delete extends c_menu {
 	var $ProjectID = "{B4028305-4D6B-4D03-8DB3-7403E0DBC5D2}";
 
 	// Table name
-	var $TableName = 'menu';
+	var $TableName = 'slider';
 
 	// Page object name
-	var $PageObjName = 'p_menu_delete';
+	var $PageObjName = 'slider_delete';
 
 	// Page name
 	function PageName() {
@@ -226,10 +226,10 @@ class cp_menu_delete extends c_menu {
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (_menu)
-		if (!isset($GLOBALS["_menu"]) || get_class($GLOBALS["_menu"]) == "c_menu") {
-			$GLOBALS["_menu"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["_menu"];
+		// Table object (slider)
+		if (!isset($GLOBALS["slider"]) || get_class($GLOBALS["slider"]) == "cslider") {
+			$GLOBALS["slider"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["slider"];
 		}
 
 		// Table object (usuarios)
@@ -241,7 +241,7 @@ class cp_menu_delete extends c_menu {
 
 		// Table name (for backward compatibility)
 		if (!defined("EW_TABLE_NAME"))
-			define("EW_TABLE_NAME", 'menu', TRUE);
+			define("EW_TABLE_NAME", 'slider', TRUE);
 
 		// Start timer
 		if (!isset($GLOBALS["gTimer"])) $GLOBALS["gTimer"] = new cTimer();
@@ -272,7 +272,7 @@ class cp_menu_delete extends c_menu {
 			$Security->SaveLastUrl();
 			$this->setFailureMessage(ew_DeniedMsg()); // Set no permission
 			if ($Security->CanList())
-				$this->Page_Terminate(ew_GetUrl("_menulist.php"));
+				$this->Page_Terminate(ew_GetUrl("sliderlist.php"));
 			else
 				$this->Page_Terminate(ew_GetUrl("login.php"));
 		}
@@ -282,10 +282,10 @@ class cp_menu_delete extends c_menu {
 			$Security->UserID_Loaded();
 		}
 		$this->CurrentAction = (@$_GET["a"] <> "") ? $_GET["a"] : @$_POST["a_list"]; // Set up current action
-		$this->denominacion->SetVisibility();
-		$this->orden->SetVisibility();
 		$this->imagen->SetVisibility();
-		$this->accesoDirecto->SetVisibility();
+		$this->titulo->SetVisibility();
+		$this->subtitulo->SetVisibility();
+		$this->link->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -317,13 +317,13 @@ class cp_menu_delete extends c_menu {
 		Page_Unloaded();
 
 		// Export
-		global $EW_EXPORT, $_menu;
+		global $EW_EXPORT, $slider;
 		if ($this->CustomExport <> "" && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EW_EXPORT)) {
 				$sContent = ob_get_contents();
 			if ($gsExportFile == "") $gsExportFile = $this->TableVar;
 			$class = $EW_EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($_menu);
+				$doc = new $class($slider);
 				$doc->Text = $sContent;
 				if ($this->Export == "email")
 					echo $this->ExportEmail($doc->Text);
@@ -369,10 +369,10 @@ class cp_menu_delete extends c_menu {
 		$this->RecKeys = $this->GetRecordKeys(); // Load record keys
 		$sFilter = $this->GetKeyFilter();
 		if ($sFilter == "")
-			$this->Page_Terminate("_menulist.php"); // Prevent SQL injection, return to list
+			$this->Page_Terminate("sliderlist.php"); // Prevent SQL injection, return to list
 
 		// Set up filter (SQL WHHERE clause) and get return SQL
-		// SQL constructor in _menu class, _menuinfo.php
+		// SQL constructor in slider class, sliderinfo.php
 
 		$this->CurrentFilter = $sFilter;
 
@@ -400,7 +400,7 @@ class cp_menu_delete extends c_menu {
 			if ($this->TotalRecs <= 0) { // No record found, exit
 				if ($this->Recordset)
 					$this->Recordset->Close();
-				$this->Page_Terminate("_menulist.php"); // Return to list
+				$this->Page_Terminate("sliderlist.php"); // Return to list
 			}
 		}
 	}
@@ -461,11 +461,12 @@ class cp_menu_delete extends c_menu {
 		$row = &$rs->fields;
 		$this->Row_Selected($row);
 		$this->id->setDbValue($rs->fields('id'));
-		$this->denominacion->setDbValue($rs->fields('denominacion'));
-		$this->orden->setDbValue($rs->fields('orden'));
 		$this->imagen->Upload->DbValue = $rs->fields('imagen');
 		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
-		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
+		$this->informacion->setDbValue($rs->fields('informacion'));
+		$this->titulo->setDbValue($rs->fields('titulo'));
+		$this->subtitulo->setDbValue($rs->fields('subtitulo'));
+		$this->link->setDbValue($rs->fields('link'));
 	}
 
 	// Load DbValue from recordset
@@ -473,10 +474,11 @@ class cp_menu_delete extends c_menu {
 		if (!$rs || !is_array($rs) && $rs->EOF) return;
 		$row = is_array($rs) ? $rs : $rs->fields;
 		$this->id->DbValue = $row['id'];
-		$this->denominacion->DbValue = $row['denominacion'];
-		$this->orden->DbValue = $row['orden'];
 		$this->imagen->Upload->DbValue = $row['imagen'];
-		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
+		$this->informacion->DbValue = $row['informacion'];
+		$this->titulo->DbValue = $row['titulo'];
+		$this->subtitulo->DbValue = $row['subtitulo'];
+		$this->link->DbValue = $row['link'];
 	}
 
 	// Render row values based on field settings
@@ -484,12 +486,8 @@ class cp_menu_delete extends c_menu {
 		global $Security, $Language, $gsLanguage;
 
 		// Initialize URLs
-		// Convert decimal values if posted back
-
-		if ($this->orden->FormValue == $this->orden->CurrentValue && is_numeric(ew_StrToFloat($this->orden->CurrentValue)))
-			$this->orden->CurrentValue = ew_StrToFloat($this->orden->CurrentValue);
-
 		// Call Row_Rendering event
+
 		$this->Row_Rendering();
 
 		// Common render codes for all row types
@@ -497,20 +495,13 @@ class cp_menu_delete extends c_menu {
 
 		$this->id->CellCssStyle = "white-space: nowrap;";
 
-		// denominacion
-		// orden
 		// imagen
-		// accesoDirecto
+		// informacion
+		// titulo
+		// subtitulo
+		// link
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
-
-		// denominacion
-		$this->denominacion->ViewValue = $this->denominacion->CurrentValue;
-		$this->denominacion->ViewCustomAttributes = "";
-
-		// orden
-		$this->orden->ViewValue = $this->orden->CurrentValue;
-		$this->orden->ViewCustomAttributes = "";
 
 		// imagen
 		if (!ew_Empty($this->imagen->Upload->DbValue)) {
@@ -520,23 +511,17 @@ class cp_menu_delete extends c_menu {
 		}
 		$this->imagen->ViewCustomAttributes = "";
 
-		// accesoDirecto
-		if (strval($this->accesoDirecto->CurrentValue) <> "") {
-			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
-		} else {
-			$this->accesoDirecto->ViewValue = NULL;
-		}
-		$this->accesoDirecto->ViewCustomAttributes = "";
+		// titulo
+		$this->titulo->ViewValue = $this->titulo->CurrentValue;
+		$this->titulo->ViewCustomAttributes = "";
 
-			// denominacion
-			$this->denominacion->LinkCustomAttributes = "";
-			$this->denominacion->HrefValue = "";
-			$this->denominacion->TooltipValue = "";
+		// subtitulo
+		$this->subtitulo->ViewValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->ViewCustomAttributes = "";
 
-			// orden
-			$this->orden->LinkCustomAttributes = "";
-			$this->orden->HrefValue = "";
-			$this->orden->TooltipValue = "";
+		// link
+		$this->link->ViewValue = $this->link->CurrentValue;
+		$this->link->ViewCustomAttributes = "";
 
 			// imagen
 			$this->imagen->LinkCustomAttributes = "";
@@ -544,10 +529,20 @@ class cp_menu_delete extends c_menu {
 			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 			$this->imagen->TooltipValue = "";
 
-			// accesoDirecto
-			$this->accesoDirecto->LinkCustomAttributes = "";
-			$this->accesoDirecto->HrefValue = "";
-			$this->accesoDirecto->TooltipValue = "";
+			// titulo
+			$this->titulo->LinkCustomAttributes = "";
+			$this->titulo->HrefValue = "";
+			$this->titulo->TooltipValue = "";
+
+			// subtitulo
+			$this->subtitulo->LinkCustomAttributes = "";
+			$this->subtitulo->HrefValue = "";
+			$this->subtitulo->TooltipValue = "";
+
+			// link
+			$this->link->LinkCustomAttributes = "";
+			$this->link->HrefValue = "";
+			$this->link->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -645,7 +640,7 @@ class cp_menu_delete extends c_menu {
 		global $Breadcrumb, $Language;
 		$Breadcrumb = new cBreadcrumb();
 		$url = substr(ew_CurrentUrl(), strrpos(ew_CurrentUrl(), "/")+1);
-		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("_menulist.php"), "", $this->TableVar, TRUE);
+		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("sliderlist.php"), "", $this->TableVar, TRUE);
 		$PageId = "delete";
 		$Breadcrumb->Add("delete", $PageId, $url);
 	}
@@ -731,29 +726,29 @@ class cp_menu_delete extends c_menu {
 <?php
 
 // Create page object
-if (!isset($p_menu_delete)) $p_menu_delete = new cp_menu_delete();
+if (!isset($slider_delete)) $slider_delete = new cslider_delete();
 
 // Page init
-$p_menu_delete->Page_Init();
+$slider_delete->Page_Init();
 
 // Page main
-$p_menu_delete->Page_Main();
+$slider_delete->Page_Main();
 
 // Global Page Rendering event (in userfn*.php)
 Page_Rendering();
 
 // Page Rendering event
-$p_menu_delete->Page_Render();
+$slider_delete->Page_Render();
 ?>
 <?php include_once "header.php" ?>
 <script type="text/javascript">
 
 // Form object
 var CurrentPageID = EW_PAGE_ID = "delete";
-var CurrentForm = f_menudelete = new ew_Form("f_menudelete", "delete");
+var CurrentForm = fsliderdelete = new ew_Form("fsliderdelete", "delete");
 
 // Form_CustomValidate event
-f_menudelete.Form_CustomValidate = 
+fsliderdelete.Form_CustomValidate = 
  function(fobj) { // DO NOT CHANGE THIS LINE!
 
  	// Your custom validation code here, return false if invalid. 
@@ -762,16 +757,14 @@ f_menudelete.Form_CustomValidate =
 
 // Use JavaScript validation or not
 <?php if (EW_CLIENT_VALIDATE) { ?>
-f_menudelete.ValidateRequired = true;
+fsliderdelete.ValidateRequired = true;
 <?php } else { ?>
-f_menudelete.ValidateRequired = false; 
+fsliderdelete.ValidateRequired = false; 
 <?php } ?>
 
 // Dynamic selection lists
-f_menudelete.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
-f_menudelete.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
-
 // Form object for search
+
 </script>
 <script type="text/javascript">
 
@@ -782,97 +775,97 @@ f_menudelete.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->a
 <?php echo $Language->SelectionForm(); ?>
 <div class="clearfix"></div>
 </div>
-<?php $p_menu_delete->ShowPageHeader(); ?>
+<?php $slider_delete->ShowPageHeader(); ?>
 <?php
-$p_menu_delete->ShowMessage();
+$slider_delete->ShowMessage();
 ?>
-<form name="f_menudelete" id="f_menudelete" class="form-inline ewForm ewDeleteForm" action="<?php echo ew_CurrentPage() ?>" method="post">
-<?php if ($p_menu_delete->CheckToken) { ?>
-<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $p_menu_delete->Token ?>">
+<form name="fsliderdelete" id="fsliderdelete" class="form-inline ewForm ewDeleteForm" action="<?php echo ew_CurrentPage() ?>" method="post">
+<?php if ($slider_delete->CheckToken) { ?>
+<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $slider_delete->Token ?>">
 <?php } ?>
-<input type="hidden" name="t" value="_menu">
+<input type="hidden" name="t" value="slider">
 <input type="hidden" name="a_delete" id="a_delete" value="D">
-<?php foreach ($p_menu_delete->RecKeys as $key) { ?>
+<?php foreach ($slider_delete->RecKeys as $key) { ?>
 <?php $keyvalue = is_array($key) ? implode($EW_COMPOSITE_KEY_SEPARATOR, $key) : $key; ?>
 <input type="hidden" name="key_m[]" value="<?php echo ew_HtmlEncode($keyvalue) ?>">
 <?php } ?>
 <div class="ewGrid">
 <div class="<?php if (ew_IsResponsiveLayout()) { echo "table-responsive "; } ?>ewGridMiddlePanel">
 <table class="table ewTable">
-<?php echo $_menu->TableCustomInnerHtml ?>
+<?php echo $slider->TableCustomInnerHtml ?>
 	<thead>
 	<tr class="ewTableHeader">
-<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-		<th><span id="elh__menu_denominacion" class="_menu_denominacion"><?php echo $_menu->denominacion->FldCaption() ?></span></th>
+<?php if ($slider->imagen->Visible) { // imagen ?>
+		<th><span id="elh_slider_imagen" class="slider_imagen"><?php echo $slider->imagen->FldCaption() ?></span></th>
 <?php } ?>
-<?php if ($_menu->orden->Visible) { // orden ?>
-		<th><span id="elh__menu_orden" class="_menu_orden"><?php echo $_menu->orden->FldCaption() ?></span></th>
+<?php if ($slider->titulo->Visible) { // titulo ?>
+		<th><span id="elh_slider_titulo" class="slider_titulo"><?php echo $slider->titulo->FldCaption() ?></span></th>
 <?php } ?>
-<?php if ($_menu->imagen->Visible) { // imagen ?>
-		<th><span id="elh__menu_imagen" class="_menu_imagen"><?php echo $_menu->imagen->FldCaption() ?></span></th>
+<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+		<th><span id="elh_slider_subtitulo" class="slider_subtitulo"><?php echo $slider->subtitulo->FldCaption() ?></span></th>
 <?php } ?>
-<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-		<th><span id="elh__menu_accesoDirecto" class="_menu_accesoDirecto"><?php echo $_menu->accesoDirecto->FldCaption() ?></span></th>
+<?php if ($slider->link->Visible) { // link ?>
+		<th><span id="elh_slider_link" class="slider_link"><?php echo $slider->link->FldCaption() ?></span></th>
 <?php } ?>
 	</tr>
 	</thead>
 	<tbody>
 <?php
-$p_menu_delete->RecCnt = 0;
+$slider_delete->RecCnt = 0;
 $i = 0;
-while (!$p_menu_delete->Recordset->EOF) {
-	$p_menu_delete->RecCnt++;
-	$p_menu_delete->RowCnt++;
+while (!$slider_delete->Recordset->EOF) {
+	$slider_delete->RecCnt++;
+	$slider_delete->RowCnt++;
 
 	// Set row properties
-	$_menu->ResetAttrs();
-	$_menu->RowType = EW_ROWTYPE_VIEW; // View
+	$slider->ResetAttrs();
+	$slider->RowType = EW_ROWTYPE_VIEW; // View
 
 	// Get the field contents
-	$p_menu_delete->LoadRowValues($p_menu_delete->Recordset);
+	$slider_delete->LoadRowValues($slider_delete->Recordset);
 
 	// Render row
-	$p_menu_delete->RenderRow();
+	$slider_delete->RenderRow();
 ?>
-	<tr<?php echo $_menu->RowAttributes() ?>>
-<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-		<td<?php echo $_menu->denominacion->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_delete->RowCnt ?>__menu_denominacion" class="_menu_denominacion">
-<span<?php echo $_menu->denominacion->ViewAttributes() ?>>
-<?php echo $_menu->denominacion->ListViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($_menu->orden->Visible) { // orden ?>
-		<td<?php echo $_menu->orden->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_delete->RowCnt ?>__menu_orden" class="_menu_orden">
-<span<?php echo $_menu->orden->ViewAttributes() ?>>
-<?php echo $_menu->orden->ListViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($_menu->imagen->Visible) { // imagen ?>
-		<td<?php echo $_menu->imagen->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_delete->RowCnt ?>__menu_imagen" class="_menu_imagen">
-<span<?php echo $_menu->imagen->ViewAttributes() ?>>
-<?php echo ew_GetFileViewTag($_menu->imagen, $_menu->imagen->ListViewValue()) ?>
+	<tr<?php echo $slider->RowAttributes() ?>>
+<?php if ($slider->imagen->Visible) { // imagen ?>
+		<td<?php echo $slider->imagen->CellAttributes() ?>>
+<span id="el<?php echo $slider_delete->RowCnt ?>_slider_imagen" class="slider_imagen">
+<span<?php echo $slider->imagen->ViewAttributes() ?>>
+<?php echo ew_GetFileViewTag($slider->imagen, $slider->imagen->ListViewValue()) ?>
 </span>
 </span>
 </td>
 <?php } ?>
-<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-		<td<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
-<span id="el<?php echo $p_menu_delete->RowCnt ?>__menu_accesoDirecto" class="_menu_accesoDirecto">
-<span<?php echo $_menu->accesoDirecto->ViewAttributes() ?>>
-<?php echo $_menu->accesoDirecto->ListViewValue() ?></span>
+<?php if ($slider->titulo->Visible) { // titulo ?>
+		<td<?php echo $slider->titulo->CellAttributes() ?>>
+<span id="el<?php echo $slider_delete->RowCnt ?>_slider_titulo" class="slider_titulo">
+<span<?php echo $slider->titulo->ViewAttributes() ?>>
+<?php echo $slider->titulo->ListViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+		<td<?php echo $slider->subtitulo->CellAttributes() ?>>
+<span id="el<?php echo $slider_delete->RowCnt ?>_slider_subtitulo" class="slider_subtitulo">
+<span<?php echo $slider->subtitulo->ViewAttributes() ?>>
+<?php echo $slider->subtitulo->ListViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($slider->link->Visible) { // link ?>
+		<td<?php echo $slider->link->CellAttributes() ?>>
+<span id="el<?php echo $slider_delete->RowCnt ?>_slider_link" class="slider_link">
+<span<?php echo $slider->link->ViewAttributes() ?>>
+<?php echo $slider->link->ListViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
 	</tr>
 <?php
-	$p_menu_delete->Recordset->MoveNext();
+	$slider_delete->Recordset->MoveNext();
 }
-$p_menu_delete->Recordset->Close();
+$slider_delete->Recordset->Close();
 ?>
 </tbody>
 </table>
@@ -880,14 +873,14 @@ $p_menu_delete->Recordset->Close();
 </div>
 <div>
 <button class="btn btn-primary ewButton" name="btnAction" id="btnAction" type="submit"><?php echo $Language->Phrase("DeleteBtn") ?></button>
-<button class="btn btn-default ewButton" name="btnCancel" id="btnCancel" type="button" data-href="<?php echo $p_menu_delete->getReturnUrl() ?>"><?php echo $Language->Phrase("CancelBtn") ?></button>
+<button class="btn btn-default ewButton" name="btnCancel" id="btnCancel" type="button" data-href="<?php echo $slider_delete->getReturnUrl() ?>"><?php echo $Language->Phrase("CancelBtn") ?></button>
 </div>
 </form>
 <script type="text/javascript">
-f_menudelete.Init();
+fsliderdelete.Init();
 </script>
 <?php
-$p_menu_delete->ShowPageFooter();
+$slider_delete->ShowPageFooter();
 if (EW_DEBUG_ENABLED)
 	echo ew_DebugMsg();
 ?>
@@ -899,5 +892,5 @@ if (EW_DEBUG_ENABLED)
 </script>
 <?php include_once "footer.php" ?>
 <?php
-$p_menu_delete->Page_Terminate();
+$slider_delete->Page_Terminate();
 ?>

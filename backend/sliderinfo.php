@@ -1,17 +1,18 @@
 <?php
 
 // Global variable for table object
-$_menu = NULL;
+$slider = NULL;
 
 //
-// Table class for menu
+// Table class for slider
 //
-class c_menu extends cTable {
+class cslider extends cTable {
 	var $id;
-	var $denominacion;
-	var $orden;
 	var $imagen;
-	var $accesoDirecto;
+	var $informacion;
+	var $titulo;
+	var $subtitulo;
+	var $link;
 
 	//
 	// Table class constructor
@@ -21,12 +22,12 @@ class c_menu extends cTable {
 
 		// Language object
 		if (!isset($Language)) $Language = new cLanguage();
-		$this->TableVar = '_menu';
-		$this->TableName = 'menu';
+		$this->TableVar = 'slider';
+		$this->TableName = 'slider';
 		$this->TableType = 'TABLE';
 
 		// Update Table
-		$this->UpdateTable = "`menu`";
+		$this->UpdateTable = "`slider`";
 		$this->DBID = 'DB';
 		$this->ExportAll = TRUE;
 		$this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -45,33 +46,35 @@ class c_menu extends cTable {
 		$this->BasicSearch->TypeDefault = "OR";
 
 		// id
-		$this->id = new cField('_menu', 'menu', 'x_id', 'id', '`id`', '`id`', 19, -1, FALSE, '`id`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'NO');
+		$this->id = new cField('slider', 'slider', 'x_id', 'id', '`id`', '`id`', 19, -1, FALSE, '`id`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'NO');
 		$this->id->Sortable = FALSE; // Allow sort
 		$this->id->FldDefaultErrMsg = $Language->Phrase("IncorrectInteger");
 		$this->fields['id'] = &$this->id;
 
-		// denominacion
-		$this->denominacion = new cField('_menu', 'menu', 'x_denominacion', 'denominacion', '`denominacion`', '`denominacion`', 200, -1, FALSE, '`denominacion`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
-		$this->denominacion->Sortable = TRUE; // Allow sort
-		$this->fields['denominacion'] = &$this->denominacion;
-
-		// orden
-		$this->orden = new cField('_menu', 'menu', 'x_orden', 'orden', '`orden`', '`orden`', 5, -1, FALSE, '`orden`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
-		$this->orden->Sortable = TRUE; // Allow sort
-		$this->orden->FldDefaultErrMsg = $Language->Phrase("IncorrectFloat");
-		$this->fields['orden'] = &$this->orden;
-
 		// imagen
-		$this->imagen = new cField('_menu', 'menu', 'x_imagen', 'imagen', '`imagen`', '`imagen`', 200, -1, TRUE, '`imagen`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'FILE');
+		$this->imagen = new cField('slider', 'slider', 'x_imagen', 'imagen', '`imagen`', '`imagen`', 200, -1, TRUE, '`imagen`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'FILE');
 		$this->imagen->Sortable = TRUE; // Allow sort
 		$this->fields['imagen'] = &$this->imagen;
 
-		// accesoDirecto
-		$this->accesoDirecto = new cField('_menu', 'menu', 'x_accesoDirecto', 'accesoDirecto', '`accesoDirecto`', '`accesoDirecto`', 3, -1, FALSE, '`accesoDirecto`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'RADIO');
-		$this->accesoDirecto->Sortable = TRUE; // Allow sort
-		$this->accesoDirecto->OptionCount = 2;
-		$this->accesoDirecto->FldDefaultErrMsg = $Language->Phrase("IncorrectInteger");
-		$this->fields['accesoDirecto'] = &$this->accesoDirecto;
+		// informacion
+		$this->informacion = new cField('slider', 'slider', 'x_informacion', 'informacion', '`informacion`', '`informacion`', 201, -1, FALSE, '`informacion`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXTAREA');
+		$this->informacion->Sortable = TRUE; // Allow sort
+		$this->fields['informacion'] = &$this->informacion;
+
+		// titulo
+		$this->titulo = new cField('slider', 'slider', 'x_titulo', 'titulo', '`titulo`', '`titulo`', 200, -1, FALSE, '`titulo`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
+		$this->titulo->Sortable = TRUE; // Allow sort
+		$this->fields['titulo'] = &$this->titulo;
+
+		// subtitulo
+		$this->subtitulo = new cField('slider', 'slider', 'x_subtitulo', 'subtitulo', '`subtitulo`', '`subtitulo`', 200, -1, FALSE, '`subtitulo`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
+		$this->subtitulo->Sortable = TRUE; // Allow sort
+		$this->fields['subtitulo'] = &$this->subtitulo;
+
+		// link
+		$this->link = new cField('slider', 'slider', 'x_link', 'link', '`link`', '`link`', 200, -1, FALSE, '`link`', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
+		$this->link->Sortable = TRUE; // Allow sort
+		$this->fields['link'] = &$this->link;
 	}
 
 	// Set Field Visibility
@@ -101,7 +104,7 @@ class c_menu extends cTable {
 	var $_SqlFrom = "";
 
 	function getSqlFrom() { // From
-		return ($this->_SqlFrom <> "") ? $this->_SqlFrom : "`menu`";
+		return ($this->_SqlFrom <> "") ? $this->_SqlFrom : "`slider`";
 	}
 
 	function SqlFrom() { // For backward compatibility
@@ -169,7 +172,7 @@ class c_menu extends cTable {
 	var $_SqlOrderBy = "";
 
 	function getSqlOrderBy() { // Order By
-		return ($this->_SqlOrderBy <> "") ? $this->_SqlOrderBy : "`orden` ASC,`denominacion` ASC";
+		return ($this->_SqlOrderBy <> "") ? $this->_SqlOrderBy : "";
 	}
 
 	function SqlOrderBy() { // For backward compatibility
@@ -396,7 +399,7 @@ class c_menu extends cTable {
 		if (@$_SESSION[$name] <> "") {
 			return $_SESSION[$name];
 		} else {
-			return "_menulist.php";
+			return "sliderlist.php";
 		}
 	}
 
@@ -406,30 +409,30 @@ class c_menu extends cTable {
 
 	// List URL
 	function GetListUrl() {
-		return "_menulist.php";
+		return "sliderlist.php";
 	}
 
 	// View URL
 	function GetViewUrl($parm = "") {
 		if ($parm <> "")
-			$url = $this->KeyUrl("_menuview.php", $this->UrlParm($parm));
+			$url = $this->KeyUrl("sliderview.php", $this->UrlParm($parm));
 		else
-			$url = $this->KeyUrl("_menuview.php", $this->UrlParm(EW_TABLE_SHOW_DETAIL . "="));
+			$url = $this->KeyUrl("sliderview.php", $this->UrlParm(EW_TABLE_SHOW_DETAIL . "="));
 		return $this->AddMasterUrl($url);
 	}
 
 	// Add URL
 	function GetAddUrl($parm = "") {
 		if ($parm <> "")
-			$url = "_menuadd.php?" . $this->UrlParm($parm);
+			$url = "slideradd.php?" . $this->UrlParm($parm);
 		else
-			$url = "_menuadd.php";
+			$url = "slideradd.php";
 		return $this->AddMasterUrl($url);
 	}
 
 	// Edit URL
 	function GetEditUrl($parm = "") {
-		$url = $this->KeyUrl("_menuedit.php", $this->UrlParm($parm));
+		$url = $this->KeyUrl("slideredit.php", $this->UrlParm($parm));
 		return $this->AddMasterUrl($url);
 	}
 
@@ -441,7 +444,7 @@ class c_menu extends cTable {
 
 	// Copy URL
 	function GetCopyUrl($parm = "") {
-		$url = $this->KeyUrl("_menuadd.php", $this->UrlParm($parm));
+		$url = $this->KeyUrl("slideradd.php", $this->UrlParm($parm));
 		return $this->AddMasterUrl($url);
 	}
 
@@ -453,7 +456,7 @@ class c_menu extends cTable {
 
 	// Delete URL
 	function GetDeleteUrl() {
-		return $this->KeyUrl("_menudelete.php", $this->UrlParm());
+		return $this->KeyUrl("sliderdelete.php", $this->UrlParm());
 	}
 
 	// Add master url
@@ -555,10 +558,11 @@ class c_menu extends cTable {
 	// Load row values from recordset
 	function LoadListRowValues(&$rs) {
 		$this->id->setDbValue($rs->fields('id'));
-		$this->denominacion->setDbValue($rs->fields('denominacion'));
-		$this->orden->setDbValue($rs->fields('orden'));
 		$this->imagen->Upload->DbValue = $rs->fields('imagen');
-		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
+		$this->informacion->setDbValue($rs->fields('informacion'));
+		$this->titulo->setDbValue($rs->fields('titulo'));
+		$this->subtitulo->setDbValue($rs->fields('subtitulo'));
+		$this->link->setDbValue($rs->fields('link'));
 	}
 
 	// Render list row values
@@ -573,22 +577,15 @@ class c_menu extends cTable {
 
 		$this->id->CellCssStyle = "white-space: nowrap;";
 
-		// denominacion
-		// orden
 		// imagen
-		// accesoDirecto
+		// informacion
+		// titulo
+		// subtitulo
+		// link
 		// id
 
 		$this->id->ViewValue = $this->id->CurrentValue;
 		$this->id->ViewCustomAttributes = "";
-
-		// denominacion
-		$this->denominacion->ViewValue = $this->denominacion->CurrentValue;
-		$this->denominacion->ViewCustomAttributes = "";
-
-		// orden
-		$this->orden->ViewValue = $this->orden->CurrentValue;
-		$this->orden->ViewCustomAttributes = "";
 
 		// imagen
 		if (!ew_Empty($this->imagen->Upload->DbValue)) {
@@ -598,28 +595,26 @@ class c_menu extends cTable {
 		}
 		$this->imagen->ViewCustomAttributes = "";
 
-		// accesoDirecto
-		if (strval($this->accesoDirecto->CurrentValue) <> "") {
-			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
-		} else {
-			$this->accesoDirecto->ViewValue = NULL;
-		}
-		$this->accesoDirecto->ViewCustomAttributes = "";
+		// informacion
+		$this->informacion->ViewValue = $this->informacion->CurrentValue;
+		$this->informacion->ViewCustomAttributes = "";
+
+		// titulo
+		$this->titulo->ViewValue = $this->titulo->CurrentValue;
+		$this->titulo->ViewCustomAttributes = "";
+
+		// subtitulo
+		$this->subtitulo->ViewValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->ViewCustomAttributes = "";
+
+		// link
+		$this->link->ViewValue = $this->link->CurrentValue;
+		$this->link->ViewCustomAttributes = "";
 
 		// id
 		$this->id->LinkCustomAttributes = "";
 		$this->id->HrefValue = "";
 		$this->id->TooltipValue = "";
-
-		// denominacion
-		$this->denominacion->LinkCustomAttributes = "";
-		$this->denominacion->HrefValue = "";
-		$this->denominacion->TooltipValue = "";
-
-		// orden
-		$this->orden->LinkCustomAttributes = "";
-		$this->orden->HrefValue = "";
-		$this->orden->TooltipValue = "";
 
 		// imagen
 		$this->imagen->LinkCustomAttributes = "";
@@ -627,10 +622,25 @@ class c_menu extends cTable {
 		$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 		$this->imagen->TooltipValue = "";
 
-		// accesoDirecto
-		$this->accesoDirecto->LinkCustomAttributes = "";
-		$this->accesoDirecto->HrefValue = "";
-		$this->accesoDirecto->TooltipValue = "";
+		// informacion
+		$this->informacion->LinkCustomAttributes = "";
+		$this->informacion->HrefValue = "";
+		$this->informacion->TooltipValue = "";
+
+		// titulo
+		$this->titulo->LinkCustomAttributes = "";
+		$this->titulo->HrefValue = "";
+		$this->titulo->TooltipValue = "";
+
+		// subtitulo
+		$this->subtitulo->LinkCustomAttributes = "";
+		$this->subtitulo->HrefValue = "";
+		$this->subtitulo->TooltipValue = "";
+
+		// link
+		$this->link->LinkCustomAttributes = "";
+		$this->link->HrefValue = "";
+		$this->link->TooltipValue = "";
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -649,19 +659,6 @@ class c_menu extends cTable {
 		$this->id->EditValue = $this->id->CurrentValue;
 		$this->id->ViewCustomAttributes = "";
 
-		// denominacion
-		$this->denominacion->EditAttrs["class"] = "form-control";
-		$this->denominacion->EditCustomAttributes = "";
-		$this->denominacion->EditValue = $this->denominacion->CurrentValue;
-		$this->denominacion->PlaceHolder = ew_RemoveHtml($this->denominacion->FldCaption());
-
-		// orden
-		$this->orden->EditAttrs["class"] = "form-control";
-		$this->orden->EditCustomAttributes = "";
-		$this->orden->EditValue = $this->orden->CurrentValue;
-		$this->orden->PlaceHolder = ew_RemoveHtml($this->orden->FldCaption());
-		if (strval($this->orden->EditValue) <> "" && is_numeric($this->orden->EditValue)) $this->orden->EditValue = ew_FormatNumber($this->orden->EditValue, -2, -1, -2, 0);
-
 		// imagen
 		$this->imagen->EditAttrs["class"] = "form-control";
 		$this->imagen->EditCustomAttributes = "";
@@ -673,9 +670,29 @@ class c_menu extends cTable {
 		if (!ew_Empty($this->imagen->CurrentValue))
 			$this->imagen->Upload->FileName = $this->imagen->CurrentValue;
 
-		// accesoDirecto
-		$this->accesoDirecto->EditCustomAttributes = "";
-		$this->accesoDirecto->EditValue = $this->accesoDirecto->Options(FALSE);
+		// informacion
+		$this->informacion->EditAttrs["class"] = "form-control";
+		$this->informacion->EditCustomAttributes = "";
+		$this->informacion->EditValue = $this->informacion->CurrentValue;
+		$this->informacion->PlaceHolder = ew_RemoveHtml($this->informacion->FldCaption());
+
+		// titulo
+		$this->titulo->EditAttrs["class"] = "form-control";
+		$this->titulo->EditCustomAttributes = "";
+		$this->titulo->EditValue = $this->titulo->CurrentValue;
+		$this->titulo->PlaceHolder = ew_RemoveHtml($this->titulo->FldCaption());
+
+		// subtitulo
+		$this->subtitulo->EditAttrs["class"] = "form-control";
+		$this->subtitulo->EditCustomAttributes = "";
+		$this->subtitulo->EditValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->PlaceHolder = ew_RemoveHtml($this->subtitulo->FldCaption());
+
+		// link
+		$this->link->EditAttrs["class"] = "form-control";
+		$this->link->EditCustomAttributes = "";
+		$this->link->EditValue = $this->link->CurrentValue;
+		$this->link->PlaceHolder = ew_RemoveHtml($this->link->FldCaption());
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -704,15 +721,16 @@ class c_menu extends cTable {
 			if ($Doc->Horizontal) { // Horizontal format, write header
 				$Doc->BeginExportRow();
 				if ($ExportPageType == "view") {
-					if ($this->denominacion->Exportable) $Doc->ExportCaption($this->denominacion);
-					if ($this->orden->Exportable) $Doc->ExportCaption($this->orden);
 					if ($this->imagen->Exportable) $Doc->ExportCaption($this->imagen);
-					if ($this->accesoDirecto->Exportable) $Doc->ExportCaption($this->accesoDirecto);
+					if ($this->informacion->Exportable) $Doc->ExportCaption($this->informacion);
+					if ($this->titulo->Exportable) $Doc->ExportCaption($this->titulo);
+					if ($this->subtitulo->Exportable) $Doc->ExportCaption($this->subtitulo);
+					if ($this->link->Exportable) $Doc->ExportCaption($this->link);
 				} else {
-					if ($this->denominacion->Exportable) $Doc->ExportCaption($this->denominacion);
-					if ($this->orden->Exportable) $Doc->ExportCaption($this->orden);
 					if ($this->imagen->Exportable) $Doc->ExportCaption($this->imagen);
-					if ($this->accesoDirecto->Exportable) $Doc->ExportCaption($this->accesoDirecto);
+					if ($this->titulo->Exportable) $Doc->ExportCaption($this->titulo);
+					if ($this->subtitulo->Exportable) $Doc->ExportCaption($this->subtitulo);
+					if ($this->link->Exportable) $Doc->ExportCaption($this->link);
 				}
 				$Doc->EndExportRow();
 			}
@@ -744,15 +762,16 @@ class c_menu extends cTable {
 				if (!$Doc->ExportCustom) {
 					$Doc->BeginExportRow($RowCnt); // Allow CSS styles if enabled
 					if ($ExportPageType == "view") {
-						if ($this->denominacion->Exportable) $Doc->ExportField($this->denominacion);
-						if ($this->orden->Exportable) $Doc->ExportField($this->orden);
 						if ($this->imagen->Exportable) $Doc->ExportField($this->imagen);
-						if ($this->accesoDirecto->Exportable) $Doc->ExportField($this->accesoDirecto);
+						if ($this->informacion->Exportable) $Doc->ExportField($this->informacion);
+						if ($this->titulo->Exportable) $Doc->ExportField($this->titulo);
+						if ($this->subtitulo->Exportable) $Doc->ExportField($this->subtitulo);
+						if ($this->link->Exportable) $Doc->ExportField($this->link);
 					} else {
-						if ($this->denominacion->Exportable) $Doc->ExportField($this->denominacion);
-						if ($this->orden->Exportable) $Doc->ExportField($this->orden);
 						if ($this->imagen->Exportable) $Doc->ExportField($this->imagen);
-						if ($this->accesoDirecto->Exportable) $Doc->ExportField($this->accesoDirecto);
+						if ($this->titulo->Exportable) $Doc->ExportField($this->titulo);
+						if ($this->subtitulo->Exportable) $Doc->ExportField($this->subtitulo);
+						if ($this->link->Exportable) $Doc->ExportField($this->link);
 					}
 					$Doc->EndExportRow();
 				}

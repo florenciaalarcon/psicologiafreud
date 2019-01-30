@@ -5,7 +5,7 @@ ob_start(); // Turn on output buffering
 <?php include_once "ewcfg13.php" ?>
 <?php include_once ((EW_USE_ADODB) ? "adodb5/adodb.inc.php" : "ewmysql13.php") ?>
 <?php include_once "phpfn13.php" ?>
-<?php include_once "_menuinfo.php" ?>
+<?php include_once "sliderinfo.php" ?>
 <?php include_once "usuariosinfo.php" ?>
 <?php include_once "userfn13.php" ?>
 <?php
@@ -14,21 +14,21 @@ ob_start(); // Turn on output buffering
 // Page class
 //
 
-$p_menu_edit = NULL; // Initialize page object first
+$slider_add = NULL; // Initialize page object first
 
-class cp_menu_edit extends c_menu {
+class cslider_add extends cslider {
 
 	// Page ID
-	var $PageID = 'edit';
+	var $PageID = 'add';
 
 	// Project ID
 	var $ProjectID = "{B4028305-4D6B-4D03-8DB3-7403E0DBC5D2}";
 
 	// Table name
-	var $TableName = 'menu';
+	var $TableName = 'slider';
 
 	// Page object name
-	var $PageObjName = 'p_menu_edit';
+	var $PageObjName = 'slider_add';
 
 	// Page name
 	function PageName() {
@@ -226,10 +226,10 @@ class cp_menu_edit extends c_menu {
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (_menu)
-		if (!isset($GLOBALS["_menu"]) || get_class($GLOBALS["_menu"]) == "c_menu") {
-			$GLOBALS["_menu"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["_menu"];
+		// Table object (slider)
+		if (!isset($GLOBALS["slider"]) || get_class($GLOBALS["slider"]) == "cslider") {
+			$GLOBALS["slider"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["slider"];
 		}
 
 		// Table object (usuarios)
@@ -237,11 +237,11 @@ class cp_menu_edit extends c_menu {
 
 		// Page ID
 		if (!defined("EW_PAGE_ID"))
-			define("EW_PAGE_ID", 'edit', TRUE);
+			define("EW_PAGE_ID", 'add', TRUE);
 
 		// Table name (for backward compatibility)
 		if (!defined("EW_TABLE_NAME"))
-			define("EW_TABLE_NAME", 'menu', TRUE);
+			define("EW_TABLE_NAME", 'slider', TRUE);
 
 		// Start timer
 		if (!isset($GLOBALS["gTimer"])) $GLOBALS["gTimer"] = new cTimer();
@@ -268,11 +268,11 @@ class cp_menu_edit extends c_menu {
 		if ($Security->IsLoggedIn()) $Security->TablePermission_Loading();
 		$Security->LoadCurrentUserLevel($this->ProjectID . $this->TableName);
 		if ($Security->IsLoggedIn()) $Security->TablePermission_Loaded();
-		if (!$Security->CanEdit()) {
+		if (!$Security->CanAdd()) {
 			$Security->SaveLastUrl();
 			$this->setFailureMessage(ew_DeniedMsg()); // Set no permission
 			if ($Security->CanList())
-				$this->Page_Terminate(ew_GetUrl("_menulist.php"));
+				$this->Page_Terminate(ew_GetUrl("sliderlist.php"));
 			else
 				$this->Page_Terminate(ew_GetUrl("login.php"));
 		}
@@ -285,10 +285,11 @@ class cp_menu_edit extends c_menu {
 		// Create form object
 		$objForm = new cFormObj();
 		$this->CurrentAction = (@$_GET["a"] <> "") ? $_GET["a"] : @$_POST["a_list"]; // Set up current action
-		$this->denominacion->SetVisibility();
-		$this->orden->SetVisibility();
 		$this->imagen->SetVisibility();
-		$this->accesoDirecto->SetVisibility();
+		$this->informacion->SetVisibility();
+		$this->titulo->SetVisibility();
+		$this->subtitulo->SetVisibility();
+		$this->link->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -334,13 +335,13 @@ class cp_menu_edit extends c_menu {
 		Page_Unloaded();
 
 		// Export
-		global $EW_EXPORT, $_menu;
+		global $EW_EXPORT, $slider;
 		if ($this->CustomExport <> "" && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EW_EXPORT)) {
 				$sContent = ob_get_contents();
 			if ($gsExportFile == "") $gsExportFile = $this->TableVar;
 			$class = $EW_EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($_menu);
+				$doc = new $class($slider);
 				$doc->Text = $sContent;
 				if ($this->Export == "email")
 					echo $this->ExportEmail($doc->Text);
@@ -371,10 +372,14 @@ class cp_menu_edit extends c_menu {
 		}
 		exit();
 	}
-	var $FormClassName = "form-horizontal ewForm ewEditForm";
+	var $FormClassName = "form-horizontal ewForm ewAddForm";
 	var $IsModal = FALSE;
-	var $DbMasterFilter;
-	var $DbDetailFilter;
+	var $DbMasterFilter = "";
+	var $DbDetailFilter = "";
+	var $StartRec;
+	var $Priv = 0;
+	var $OldRecordset;
+	var $CopyRecord;
 
 	// 
 	// Page main
@@ -388,100 +393,78 @@ class cp_menu_edit extends c_menu {
 		if ($this->IsModal)
 			$gbSkipHeaderFooter = TRUE;
 
-		// Load key from QueryString
-		if (@$_GET["id"] <> "") {
-			$this->id->setQueryStringValue($_GET["id"]);
+		// Process form if post back
+		if (@$_POST["a_add"] <> "") {
+			$this->CurrentAction = $_POST["a_add"]; // Get form action
+			$this->CopyRecord = $this->LoadOldRecord(); // Load old recordset
+			$this->LoadFormValues(); // Load form values
+		} else { // Not post back
+
+			// Load key values from QueryString
+			$this->CopyRecord = TRUE;
+			if (@$_GET["id"] != "") {
+				$this->id->setQueryStringValue($_GET["id"]);
+				$this->setKey("id", $this->id->CurrentValue); // Set up key
+			} else {
+				$this->setKey("id", ""); // Clear key
+				$this->CopyRecord = FALSE;
+			}
+			if ($this->CopyRecord) {
+				$this->CurrentAction = "C"; // Copy record
+			} else {
+				$this->CurrentAction = "I"; // Display blank record
+			}
 		}
 
 		// Set up Breadcrumb
 		$this->SetupBreadcrumb();
 
-		// Process form if post back
-		if (@$_POST["a_edit"] <> "") {
-			$this->CurrentAction = $_POST["a_edit"]; // Get action code
-			$this->LoadFormValues(); // Get form values
-		} else {
-			$this->CurrentAction = "I"; // Default action is display
-		}
-
-		// Check if valid key
-		if ($this->id->CurrentValue == "") {
-			$this->Page_Terminate("_menulist.php"); // Invalid key, return to list
-		}
-
 		// Validate form if post back
-		if (@$_POST["a_edit"] <> "") {
+		if (@$_POST["a_add"] <> "") {
 			if (!$this->ValidateForm()) {
-				$this->CurrentAction = ""; // Form error, reset action
-				$this->setFailureMessage($gsFormError);
+				$this->CurrentAction = "I"; // Form error, reset action
 				$this->EventCancelled = TRUE; // Event cancelled
-				$this->RestoreFormValues();
+				$this->RestoreFormValues(); // Restore form values
+				$this->setFailureMessage($gsFormError);
 			}
+		} else {
+			if ($this->CurrentAction == "I") // Load default values for blank record
+				$this->LoadDefaultValues();
 		}
+
+		// Perform action based on action code
 		switch ($this->CurrentAction) {
-			case "I": // Get a record to display
+			case "I": // Blank record, no action required
+				break;
+			case "C": // Copy an existing record
 				if (!$this->LoadRow()) { // Load record based on key
 					if ($this->getFailureMessage() == "") $this->setFailureMessage($Language->Phrase("NoRecord")); // No record found
-					$this->Page_Terminate("_menulist.php"); // No matching record, return to list
+					$this->Page_Terminate("sliderlist.php"); // No matching record, return to list
 				}
 				break;
-			Case "U": // Update
-				$sReturnUrl = $this->getReturnUrl();
-				if (ew_GetPageName($sReturnUrl) == "_menulist.php")
-					$sReturnUrl = $this->AddMasterUrl($sReturnUrl); // List page, return to list page with correct master key if necessary
-				$this->SendEmail = TRUE; // Send email on update success
-				if ($this->EditRow()) { // Update record based on key
+			case "A": // Add new record
+				$this->SendEmail = TRUE; // Send email on add success
+				if ($this->AddRow($this->OldRecordset)) { // Add successful
 					if ($this->getSuccessMessage() == "")
-						$this->setSuccessMessage($Language->Phrase("UpdateSuccess")); // Update success
-					$this->Page_Terminate($sReturnUrl); // Return to caller
-				} elseif ($this->getFailureMessage() == $Language->Phrase("NoRecord")) {
-					$this->Page_Terminate($sReturnUrl); // Return to caller
+						$this->setSuccessMessage($Language->Phrase("AddSuccess")); // Set up success message
+					$sReturnUrl = $this->getReturnUrl();
+					if (ew_GetPageName($sReturnUrl) == "sliderlist.php")
+						$sReturnUrl = $this->AddMasterUrl($sReturnUrl); // List page, return to list page with correct master key if necessary
+					elseif (ew_GetPageName($sReturnUrl) == "sliderview.php")
+						$sReturnUrl = $this->GetViewUrl(); // View page, return to view page with keyurl directly
+					$this->Page_Terminate($sReturnUrl); // Clean up and return
 				} else {
 					$this->EventCancelled = TRUE; // Event cancelled
-					$this->RestoreFormValues(); // Restore form values if update failed
+					$this->RestoreFormValues(); // Add failed, restore form values
 				}
 		}
 
-		// Render the record
-		$this->RowType = EW_ROWTYPE_EDIT; // Render as Edit
+		// Render row based on row type
+		$this->RowType = EW_ROWTYPE_ADD; // Render add type
+
+		// Render row
 		$this->ResetAttrs();
 		$this->RenderRow();
-	}
-
-	// Set up starting record parameters
-	function SetUpStartRec() {
-		if ($this->DisplayRecs == 0)
-			return;
-		if ($this->IsPageRequest()) { // Validate request
-			if (@$_GET[EW_TABLE_START_REC] <> "") { // Check for "start" parameter
-				$this->StartRec = $_GET[EW_TABLE_START_REC];
-				$this->setStartRecordNumber($this->StartRec);
-			} elseif (@$_GET[EW_TABLE_PAGE_NO] <> "") {
-				$PageNo = $_GET[EW_TABLE_PAGE_NO];
-				if (is_numeric($PageNo)) {
-					$this->StartRec = ($PageNo-1)*$this->DisplayRecs+1;
-					if ($this->StartRec <= 0) {
-						$this->StartRec = 1;
-					} elseif ($this->StartRec >= intval(($this->TotalRecs-1)/$this->DisplayRecs)*$this->DisplayRecs+1) {
-						$this->StartRec = intval(($this->TotalRecs-1)/$this->DisplayRecs)*$this->DisplayRecs+1;
-					}
-					$this->setStartRecordNumber($this->StartRec);
-				}
-			}
-		}
-		$this->StartRec = $this->getStartRecordNumber();
-
-		// Check if correct start record counter
-		if (!is_numeric($this->StartRec) || $this->StartRec == "") { // Avoid invalid start record counter
-			$this->StartRec = 1; // Reset start record counter
-			$this->setStartRecordNumber($this->StartRec);
-		} elseif (intval($this->StartRec) > intval($this->TotalRecs)) { // Avoid starting record > total records
-			$this->StartRec = intval(($this->TotalRecs-1)/$this->DisplayRecs)*$this->DisplayRecs+1; // Point to last page first record
-			$this->setStartRecordNumber($this->StartRec);
-		} elseif (($this->StartRec-1) % $this->DisplayRecs <> 0) {
-			$this->StartRec = intval(($this->StartRec-1)/$this->DisplayRecs)*$this->DisplayRecs+1; // Point to page boundary
-			$this->setStartRecordNumber($this->StartRec);
-		}
 	}
 
 	// Get upload files
@@ -494,33 +477,49 @@ class cp_menu_edit extends c_menu {
 		$this->imagen->CurrentValue = $this->imagen->Upload->FileName;
 	}
 
+	// Load default values
+	function LoadDefaultValues() {
+		$this->imagen->Upload->DbValue = NULL;
+		$this->imagen->OldValue = $this->imagen->Upload->DbValue;
+		$this->imagen->CurrentValue = NULL; // Clear file related field
+		$this->informacion->CurrentValue = NULL;
+		$this->informacion->OldValue = $this->informacion->CurrentValue;
+		$this->titulo->CurrentValue = NULL;
+		$this->titulo->OldValue = $this->titulo->CurrentValue;
+		$this->subtitulo->CurrentValue = NULL;
+		$this->subtitulo->OldValue = $this->subtitulo->CurrentValue;
+		$this->link->CurrentValue = NULL;
+		$this->link->OldValue = $this->link->CurrentValue;
+	}
+
 	// Load form values
 	function LoadFormValues() {
 
 		// Load from form
 		global $objForm;
 		$this->GetUploadFiles(); // Get upload files
-		if (!$this->denominacion->FldIsDetailKey) {
-			$this->denominacion->setFormValue($objForm->GetValue("x_denominacion"));
+		if (!$this->informacion->FldIsDetailKey) {
+			$this->informacion->setFormValue($objForm->GetValue("x_informacion"));
 		}
-		if (!$this->orden->FldIsDetailKey) {
-			$this->orden->setFormValue($objForm->GetValue("x_orden"));
+		if (!$this->titulo->FldIsDetailKey) {
+			$this->titulo->setFormValue($objForm->GetValue("x_titulo"));
 		}
-		if (!$this->accesoDirecto->FldIsDetailKey) {
-			$this->accesoDirecto->setFormValue($objForm->GetValue("x_accesoDirecto"));
+		if (!$this->subtitulo->FldIsDetailKey) {
+			$this->subtitulo->setFormValue($objForm->GetValue("x_subtitulo"));
 		}
-		if (!$this->id->FldIsDetailKey)
-			$this->id->setFormValue($objForm->GetValue("x_id"));
+		if (!$this->link->FldIsDetailKey) {
+			$this->link->setFormValue($objForm->GetValue("x_link"));
+		}
 	}
 
 	// Restore form values
 	function RestoreFormValues() {
 		global $objForm;
-		$this->LoadRow();
-		$this->id->CurrentValue = $this->id->FormValue;
-		$this->denominacion->CurrentValue = $this->denominacion->FormValue;
-		$this->orden->CurrentValue = $this->orden->FormValue;
-		$this->accesoDirecto->CurrentValue = $this->accesoDirecto->FormValue;
+		$this->LoadOldRecord();
+		$this->informacion->CurrentValue = $this->informacion->FormValue;
+		$this->titulo->CurrentValue = $this->titulo->FormValue;
+		$this->subtitulo->CurrentValue = $this->subtitulo->FormValue;
+		$this->link->CurrentValue = $this->link->FormValue;
 	}
 
 	// Load row based on key values
@@ -553,11 +552,12 @@ class cp_menu_edit extends c_menu {
 		$row = &$rs->fields;
 		$this->Row_Selected($row);
 		$this->id->setDbValue($rs->fields('id'));
-		$this->denominacion->setDbValue($rs->fields('denominacion'));
-		$this->orden->setDbValue($rs->fields('orden'));
 		$this->imagen->Upload->DbValue = $rs->fields('imagen');
 		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
-		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
+		$this->informacion->setDbValue($rs->fields('informacion'));
+		$this->titulo->setDbValue($rs->fields('titulo'));
+		$this->subtitulo->setDbValue($rs->fields('subtitulo'));
+		$this->link->setDbValue($rs->fields('link'));
 	}
 
 	// Load DbValue from recordset
@@ -565,10 +565,34 @@ class cp_menu_edit extends c_menu {
 		if (!$rs || !is_array($rs) && $rs->EOF) return;
 		$row = is_array($rs) ? $rs : $rs->fields;
 		$this->id->DbValue = $row['id'];
-		$this->denominacion->DbValue = $row['denominacion'];
-		$this->orden->DbValue = $row['orden'];
 		$this->imagen->Upload->DbValue = $row['imagen'];
-		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
+		$this->informacion->DbValue = $row['informacion'];
+		$this->titulo->DbValue = $row['titulo'];
+		$this->subtitulo->DbValue = $row['subtitulo'];
+		$this->link->DbValue = $row['link'];
+	}
+
+	// Load old record
+	function LoadOldRecord() {
+
+		// Load key values from Session
+		$bValidKey = TRUE;
+		if (strval($this->getKey("id")) <> "")
+			$this->id->CurrentValue = $this->getKey("id"); // id
+		else
+			$bValidKey = FALSE;
+
+		// Load old recordset
+		if ($bValidKey) {
+			$this->CurrentFilter = $this->KeyFilter();
+			$sSql = $this->SQL();
+			$conn = &$this->Connection();
+			$this->OldRecordset = ew_LoadRecordset($sSql, $conn);
+			$this->LoadRowValues($this->OldRecordset); // Load row values
+		} else {
+			$this->OldRecordset = NULL;
+		}
+		return $bValidKey;
 	}
 
 	// Render row values based on field settings
@@ -576,30 +600,19 @@ class cp_menu_edit extends c_menu {
 		global $Security, $Language, $gsLanguage;
 
 		// Initialize URLs
-		// Convert decimal values if posted back
-
-		if ($this->orden->FormValue == $this->orden->CurrentValue && is_numeric(ew_StrToFloat($this->orden->CurrentValue)))
-			$this->orden->CurrentValue = ew_StrToFloat($this->orden->CurrentValue);
-
 		// Call Row_Rendering event
+
 		$this->Row_Rendering();
 
 		// Common render codes for all row types
 		// id
-		// denominacion
-		// orden
 		// imagen
-		// accesoDirecto
+		// informacion
+		// titulo
+		// subtitulo
+		// link
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
-
-		// denominacion
-		$this->denominacion->ViewValue = $this->denominacion->CurrentValue;
-		$this->denominacion->ViewCustomAttributes = "";
-
-		// orden
-		$this->orden->ViewValue = $this->orden->CurrentValue;
-		$this->orden->ViewCustomAttributes = "";
 
 		// imagen
 		if (!ew_Empty($this->imagen->Upload->DbValue)) {
@@ -609,23 +622,21 @@ class cp_menu_edit extends c_menu {
 		}
 		$this->imagen->ViewCustomAttributes = "";
 
-		// accesoDirecto
-		if (strval($this->accesoDirecto->CurrentValue) <> "") {
-			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
-		} else {
-			$this->accesoDirecto->ViewValue = NULL;
-		}
-		$this->accesoDirecto->ViewCustomAttributes = "";
+		// informacion
+		$this->informacion->ViewValue = $this->informacion->CurrentValue;
+		$this->informacion->ViewCustomAttributes = "";
 
-			// denominacion
-			$this->denominacion->LinkCustomAttributes = "";
-			$this->denominacion->HrefValue = "";
-			$this->denominacion->TooltipValue = "";
+		// titulo
+		$this->titulo->ViewValue = $this->titulo->CurrentValue;
+		$this->titulo->ViewCustomAttributes = "";
 
-			// orden
-			$this->orden->LinkCustomAttributes = "";
-			$this->orden->HrefValue = "";
-			$this->orden->TooltipValue = "";
+		// subtitulo
+		$this->subtitulo->ViewValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->ViewCustomAttributes = "";
+
+		// link
+		$this->link->ViewValue = $this->link->CurrentValue;
+		$this->link->ViewCustomAttributes = "";
 
 			// imagen
 			$this->imagen->LinkCustomAttributes = "";
@@ -633,24 +644,26 @@ class cp_menu_edit extends c_menu {
 			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 			$this->imagen->TooltipValue = "";
 
-			// accesoDirecto
-			$this->accesoDirecto->LinkCustomAttributes = "";
-			$this->accesoDirecto->HrefValue = "";
-			$this->accesoDirecto->TooltipValue = "";
-		} elseif ($this->RowType == EW_ROWTYPE_EDIT) { // Edit row
+			// informacion
+			$this->informacion->LinkCustomAttributes = "";
+			$this->informacion->HrefValue = "";
+			$this->informacion->TooltipValue = "";
 
-			// denominacion
-			$this->denominacion->EditAttrs["class"] = "form-control";
-			$this->denominacion->EditCustomAttributes = "";
-			$this->denominacion->EditValue = ew_HtmlEncode($this->denominacion->CurrentValue);
-			$this->denominacion->PlaceHolder = ew_RemoveHtml($this->denominacion->FldCaption());
+			// titulo
+			$this->titulo->LinkCustomAttributes = "";
+			$this->titulo->HrefValue = "";
+			$this->titulo->TooltipValue = "";
 
-			// orden
-			$this->orden->EditAttrs["class"] = "form-control";
-			$this->orden->EditCustomAttributes = "";
-			$this->orden->EditValue = ew_HtmlEncode($this->orden->CurrentValue);
-			$this->orden->PlaceHolder = ew_RemoveHtml($this->orden->FldCaption());
-			if (strval($this->orden->EditValue) <> "" && is_numeric($this->orden->EditValue)) $this->orden->EditValue = ew_FormatNumber($this->orden->EditValue, -2, -1, -2, 0);
+			// subtitulo
+			$this->subtitulo->LinkCustomAttributes = "";
+			$this->subtitulo->HrefValue = "";
+			$this->subtitulo->TooltipValue = "";
+
+			// link
+			$this->link->LinkCustomAttributes = "";
+			$this->link->HrefValue = "";
+			$this->link->TooltipValue = "";
+		} elseif ($this->RowType == EW_ROWTYPE_ADD) { // Add row
 
 			// imagen
 			$this->imagen->EditAttrs["class"] = "form-control";
@@ -662,30 +675,54 @@ class cp_menu_edit extends c_menu {
 			}
 			if (!ew_Empty($this->imagen->CurrentValue))
 				$this->imagen->Upload->FileName = $this->imagen->CurrentValue;
-			if ($this->CurrentAction == "I" && !$this->EventCancelled) ew_RenderUploadField($this->imagen);
+			if (($this->CurrentAction == "I" || $this->CurrentAction == "C") && !$this->EventCancelled) ew_RenderUploadField($this->imagen);
 
-			// accesoDirecto
-			$this->accesoDirecto->EditCustomAttributes = "";
-			$this->accesoDirecto->EditValue = $this->accesoDirecto->Options(FALSE);
+			// informacion
+			$this->informacion->EditAttrs["class"] = "form-control";
+			$this->informacion->EditCustomAttributes = "";
+			$this->informacion->EditValue = ew_HtmlEncode($this->informacion->CurrentValue);
+			$this->informacion->PlaceHolder = ew_RemoveHtml($this->informacion->FldCaption());
 
-			// Edit refer script
-			// denominacion
+			// titulo
+			$this->titulo->EditAttrs["class"] = "form-control";
+			$this->titulo->EditCustomAttributes = "";
+			$this->titulo->EditValue = ew_HtmlEncode($this->titulo->CurrentValue);
+			$this->titulo->PlaceHolder = ew_RemoveHtml($this->titulo->FldCaption());
 
-			$this->denominacion->LinkCustomAttributes = "";
-			$this->denominacion->HrefValue = "";
+			// subtitulo
+			$this->subtitulo->EditAttrs["class"] = "form-control";
+			$this->subtitulo->EditCustomAttributes = "";
+			$this->subtitulo->EditValue = ew_HtmlEncode($this->subtitulo->CurrentValue);
+			$this->subtitulo->PlaceHolder = ew_RemoveHtml($this->subtitulo->FldCaption());
 
-			// orden
-			$this->orden->LinkCustomAttributes = "";
-			$this->orden->HrefValue = "";
+			// link
+			$this->link->EditAttrs["class"] = "form-control";
+			$this->link->EditCustomAttributes = "";
+			$this->link->EditValue = ew_HtmlEncode($this->link->CurrentValue);
+			$this->link->PlaceHolder = ew_RemoveHtml($this->link->FldCaption());
 
+			// Add refer script
 			// imagen
+
 			$this->imagen->LinkCustomAttributes = "";
 			$this->imagen->HrefValue = "";
 			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 
-			// accesoDirecto
-			$this->accesoDirecto->LinkCustomAttributes = "";
-			$this->accesoDirecto->HrefValue = "";
+			// informacion
+			$this->informacion->LinkCustomAttributes = "";
+			$this->informacion->HrefValue = "";
+
+			// titulo
+			$this->titulo->LinkCustomAttributes = "";
+			$this->titulo->HrefValue = "";
+
+			// subtitulo
+			$this->subtitulo->LinkCustomAttributes = "";
+			$this->subtitulo->HrefValue = "";
+
+			// link
+			$this->link->LinkCustomAttributes = "";
+			$this->link->HrefValue = "";
 		}
 		if ($this->RowType == EW_ROWTYPE_ADD ||
 			$this->RowType == EW_ROWTYPE_EDIT ||
@@ -708,15 +745,6 @@ class cp_menu_edit extends c_menu {
 		// Check if validation required
 		if (!EW_SERVER_VALIDATE)
 			return ($gsFormError == "");
-		if (!$this->denominacion->FldIsDetailKey && !is_null($this->denominacion->FormValue) && $this->denominacion->FormValue == "") {
-			ew_AddMessage($gsFormError, str_replace("%s", $this->denominacion->FldCaption(), $this->denominacion->ReqErrMsg));
-		}
-		if (!$this->orden->FldIsDetailKey && !is_null($this->orden->FormValue) && $this->orden->FormValue == "") {
-			ew_AddMessage($gsFormError, str_replace("%s", $this->orden->FldCaption(), $this->orden->ReqErrMsg));
-		}
-		if (!ew_CheckNumber($this->orden->FormValue)) {
-			ew_AddMessage($gsFormError, $this->orden->FldErrMsg());
-		}
 
 		// Return validate result
 		$ValidateForm = ($gsFormError == "");
@@ -730,97 +758,90 @@ class cp_menu_edit extends c_menu {
 		return $ValidateForm;
 	}
 
-	// Update record based on key values
-	function EditRow() {
-		global $Security, $Language;
-		$sFilter = $this->KeyFilter();
-		$sFilter = $this->ApplyUserIDFilters($sFilter);
+	// Add record
+	function AddRow($rsold = NULL) {
+		global $Language, $Security;
 		$conn = &$this->Connection();
-		$this->CurrentFilter = $sFilter;
-		$sSql = $this->SQL();
-		$conn->raiseErrorFn = $GLOBALS["EW_ERROR_FN"];
-		$rs = $conn->Execute($sSql);
-		$conn->raiseErrorFn = '';
-		if ($rs === FALSE)
-			return FALSE;
-		if ($rs->EOF) {
-			$this->setFailureMessage($Language->Phrase("NoRecord")); // Set no record message
-			$EditRow = FALSE; // Update Failed
-		} else {
 
-			// Save old values
-			$rsold = &$rs->fields;
+		// Load db values from rsold
+		if ($rsold) {
 			$this->LoadDbValues($rsold);
-			$rsnew = array();
+		}
+		$rsnew = array();
 
-			// denominacion
-			$this->denominacion->SetDbValueDef($rsnew, $this->denominacion->CurrentValue, "", $this->denominacion->ReadOnly);
-
-			// orden
-			$this->orden->SetDbValueDef($rsnew, $this->orden->CurrentValue, 0, $this->orden->ReadOnly);
-
-			// imagen
-			if ($this->imagen->Visible && !$this->imagen->ReadOnly && !$this->imagen->Upload->KeepFile) {
-				$this->imagen->Upload->DbValue = $rsold['imagen']; // Get original value
-				if ($this->imagen->Upload->FileName == "") {
-					$rsnew['imagen'] = NULL;
-				} else {
-					$rsnew['imagen'] = $this->imagen->Upload->FileName;
-				}
-			}
-
-			// accesoDirecto
-			$this->accesoDirecto->SetDbValueDef($rsnew, $this->accesoDirecto->CurrentValue, NULL, $this->accesoDirecto->ReadOnly);
-			if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
-				if (!ew_Empty($this->imagen->Upload->Value)) {
-					if ($this->imagen->Upload->FileName == $this->imagen->Upload->DbValue) { // Overwrite if same file name
-						$this->imagen->Upload->DbValue = ""; // No need to delete any more
-					} else {
-						$rsnew['imagen'] = ew_UploadFileNameEx(ew_UploadPathEx(TRUE, $this->imagen->UploadPath), $rsnew['imagen']); // Get new file name
-					}
-				}
-			}
-
-			// Call Row Updating event
-			$bUpdateRow = $this->Row_Updating($rsold, $rsnew);
-			if ($bUpdateRow) {
-				$conn->raiseErrorFn = $GLOBALS["EW_ERROR_FN"];
-				if (count($rsnew) > 0)
-					$EditRow = $this->Update($rsnew, "", $rsold);
-				else
-					$EditRow = TRUE; // No field to update
-				$conn->raiseErrorFn = '';
-				if ($EditRow) {
-					if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
-						if (!ew_Empty($this->imagen->Upload->Value)) {
-							$this->imagen->Upload->SaveToFile($this->imagen->UploadPath, $rsnew['imagen'], TRUE);
-						}
-						if ($this->imagen->Upload->DbValue <> "")
-							@unlink(ew_UploadPathEx(TRUE, $this->imagen->OldUploadPath) . $this->imagen->Upload->DbValue);
-					}
-				}
+		// imagen
+		if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+			$this->imagen->Upload->DbValue = ""; // No need to delete old file
+			if ($this->imagen->Upload->FileName == "") {
+				$rsnew['imagen'] = NULL;
 			} else {
-				if ($this->getSuccessMessage() <> "" || $this->getFailureMessage() <> "") {
-
-					// Use the message, do nothing
-				} elseif ($this->CancelMessage <> "") {
-					$this->setFailureMessage($this->CancelMessage);
-					$this->CancelMessage = "";
-				} else {
-					$this->setFailureMessage($Language->Phrase("UpdateCancelled"));
-				}
-				$EditRow = FALSE;
+				$rsnew['imagen'] = $this->imagen->Upload->FileName;
 			}
 		}
 
-		// Call Row_Updated event
-		if ($EditRow)
-			$this->Row_Updated($rsold, $rsnew);
-		$rs->Close();
+		// informacion
+		$this->informacion->SetDbValueDef($rsnew, $this->informacion->CurrentValue, NULL, FALSE);
+
+		// titulo
+		$this->titulo->SetDbValueDef($rsnew, $this->titulo->CurrentValue, NULL, FALSE);
+
+		// subtitulo
+		$this->subtitulo->SetDbValueDef($rsnew, $this->subtitulo->CurrentValue, NULL, FALSE);
+
+		// link
+		$this->link->SetDbValueDef($rsnew, $this->link->CurrentValue, NULL, FALSE);
+		if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+			if (!ew_Empty($this->imagen->Upload->Value)) {
+				if ($this->imagen->Upload->FileName == $this->imagen->Upload->DbValue) { // Overwrite if same file name
+					$this->imagen->Upload->DbValue = ""; // No need to delete any more
+				} else {
+					$rsnew['imagen'] = ew_UploadFileNameEx(ew_UploadPathEx(TRUE, $this->imagen->UploadPath), $rsnew['imagen']); // Get new file name
+				}
+			}
+		}
+
+		// Call Row Inserting event
+		$rs = ($rsold == NULL) ? NULL : $rsold->fields;
+		$bInsertRow = $this->Row_Inserting($rs, $rsnew);
+		if ($bInsertRow) {
+			$conn->raiseErrorFn = $GLOBALS["EW_ERROR_FN"];
+			$AddRow = $this->Insert($rsnew);
+			$conn->raiseErrorFn = '';
+			if ($AddRow) {
+
+				// Get insert id if necessary
+				$this->id->setDbValue($conn->Insert_ID());
+				$rsnew['id'] = $this->id->DbValue;
+				if ($this->imagen->Visible && !$this->imagen->Upload->KeepFile) {
+					if (!ew_Empty($this->imagen->Upload->Value)) {
+						$this->imagen->Upload->SaveToFile($this->imagen->UploadPath, $rsnew['imagen'], TRUE);
+					}
+					if ($this->imagen->Upload->DbValue <> "")
+						@unlink(ew_UploadPathEx(TRUE, $this->imagen->OldUploadPath) . $this->imagen->Upload->DbValue);
+				}
+			}
+		} else {
+			if ($this->getSuccessMessage() <> "" || $this->getFailureMessage() <> "") {
+
+				// Use the message, do nothing
+			} elseif ($this->CancelMessage <> "") {
+				$this->setFailureMessage($this->CancelMessage);
+				$this->CancelMessage = "";
+			} else {
+				$this->setFailureMessage($Language->Phrase("InsertCancelled"));
+			}
+			$AddRow = FALSE;
+		}
+		if ($AddRow) {
+
+			// Call Row Inserted event
+			$rs = ($rsold == NULL) ? NULL : $rsold->fields;
+			$this->Row_Inserted($rs, $rsnew);
+		}
 
 		// imagen
 		ew_CleanUploadTempPath($this->imagen, $this->imagen->Upload->Index);
-		return $EditRow;
+		return $AddRow;
 	}
 
 	// Set up Breadcrumb
@@ -828,9 +849,9 @@ class cp_menu_edit extends c_menu {
 		global $Breadcrumb, $Language;
 		$Breadcrumb = new cBreadcrumb();
 		$url = substr(ew_CurrentUrl(), strrpos(ew_CurrentUrl(), "/")+1);
-		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("_menulist.php"), "", $this->TableVar, TRUE);
-		$PageId = "edit";
-		$Breadcrumb->Add("edit", $PageId, $url);
+		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("sliderlist.php"), "", $this->TableVar, TRUE);
+		$PageId = ($this->CurrentAction == "C") ? "Copy" : "Add";
+		$Breadcrumb->Add("add", $PageId, $url);
 	}
 
 	// Setup lookup filters of a field
@@ -921,29 +942,29 @@ class cp_menu_edit extends c_menu {
 <?php
 
 // Create page object
-if (!isset($p_menu_edit)) $p_menu_edit = new cp_menu_edit();
+if (!isset($slider_add)) $slider_add = new cslider_add();
 
 // Page init
-$p_menu_edit->Page_Init();
+$slider_add->Page_Init();
 
 // Page main
-$p_menu_edit->Page_Main();
+$slider_add->Page_Main();
 
 // Global Page Rendering event (in userfn*.php)
 Page_Rendering();
 
 // Page Rendering event
-$p_menu_edit->Page_Render();
+$slider_add->Page_Render();
 ?>
 <?php include_once "header.php" ?>
 <script type="text/javascript">
 
 // Form object
-var CurrentPageID = EW_PAGE_ID = "edit";
-var CurrentForm = f_menuedit = new ew_Form("f_menuedit", "edit");
+var CurrentPageID = EW_PAGE_ID = "add";
+var CurrentForm = fslideradd = new ew_Form("fslideradd", "add");
 
 // Validate form
-f_menuedit.Validate = function() {
+fslideradd.Validate = function() {
 	if (!this.ValidateRequired)
 		return true; // Ignore validation
 	var $ = jQuery, fobj = this.GetForm(), $fobj = $(fobj);
@@ -957,15 +978,6 @@ f_menuedit.Validate = function() {
 	for (var i = startcnt; i <= rowcnt; i++) {
 		var infix = ($k[0]) ? String(i) : "";
 		$fobj.data("rowindex", infix);
-			elm = this.GetElements("x" + infix + "_denominacion");
-			if (elm && !ew_IsHidden(elm) && !ew_HasValue(elm))
-				return this.OnError(elm, "<?php echo ew_JsEncode2(str_replace("%s", $_menu->denominacion->FldCaption(), $_menu->denominacion->ReqErrMsg)) ?>");
-			elm = this.GetElements("x" + infix + "_orden");
-			if (elm && !ew_IsHidden(elm) && !ew_HasValue(elm))
-				return this.OnError(elm, "<?php echo ew_JsEncode2(str_replace("%s", $_menu->orden->FldCaption(), $_menu->orden->ReqErrMsg)) ?>");
-			elm = this.GetElements("x" + infix + "_orden");
-			if (elm && !ew_CheckNumber(elm.value))
-				return this.OnError(elm, "<?php echo ew_JsEncode2($_menu->orden->FldErrMsg()) ?>");
 
 			// Fire Form_CustomValidate event
 			if (!this.Form_CustomValidate(fobj))
@@ -984,7 +996,7 @@ f_menuedit.Validate = function() {
 }
 
 // Form_CustomValidate event
-f_menuedit.Form_CustomValidate = 
+fslideradd.Form_CustomValidate = 
  function(fobj) { // DO NOT CHANGE THIS LINE!
 
  	// Your custom validation code here, return false if invalid. 
@@ -993,116 +1005,120 @@ f_menuedit.Form_CustomValidate =
 
 // Use JavaScript validation or not
 <?php if (EW_CLIENT_VALIDATE) { ?>
-f_menuedit.ValidateRequired = true;
+fslideradd.ValidateRequired = true;
 <?php } else { ?>
-f_menuedit.ValidateRequired = false; 
+fslideradd.ValidateRequired = false; 
 <?php } ?>
 
 // Dynamic selection lists
-f_menuedit.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
-f_menuedit.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
-
 // Form object for search
+
 </script>
 <script type="text/javascript">
 
 // Write your client script here, no need to add script tags.
 </script>
-<?php if (!$p_menu_edit->IsModal) { ?>
+<?php if (!$slider_add->IsModal) { ?>
 <div class="ewToolbar">
 <?php $Breadcrumb->Render(); ?>
 <?php echo $Language->SelectionForm(); ?>
 <div class="clearfix"></div>
 </div>
 <?php } ?>
-<?php $p_menu_edit->ShowPageHeader(); ?>
+<?php $slider_add->ShowPageHeader(); ?>
 <?php
-$p_menu_edit->ShowMessage();
+$slider_add->ShowMessage();
 ?>
-<form name="f_menuedit" id="f_menuedit" class="<?php echo $p_menu_edit->FormClassName ?>" action="<?php echo ew_CurrentPage() ?>" method="post">
-<?php if ($p_menu_edit->CheckToken) { ?>
-<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $p_menu_edit->Token ?>">
+<form name="fslideradd" id="fslideradd" class="<?php echo $slider_add->FormClassName ?>" action="<?php echo ew_CurrentPage() ?>" method="post">
+<?php if ($slider_add->CheckToken) { ?>
+<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $slider_add->Token ?>">
 <?php } ?>
-<input type="hidden" name="t" value="_menu">
-<input type="hidden" name="a_edit" id="a_edit" value="U">
-<?php if ($p_menu_edit->IsModal) { ?>
+<input type="hidden" name="t" value="slider">
+<input type="hidden" name="a_add" id="a_add" value="A">
+<?php if ($slider_add->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
 <div>
-<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-	<div id="r_denominacion" class="form-group">
-		<label id="elh__menu_denominacion" for="x_denominacion" class="col-sm-2 control-label ewLabel"><?php echo $_menu->denominacion->FldCaption() ?><?php echo $Language->Phrase("FieldRequiredIndicator") ?></label>
-		<div class="col-sm-10"><div<?php echo $_menu->denominacion->CellAttributes() ?>>
-<span id="el__menu_denominacion">
-<input type="text" data-table="_menu" data-field="x_denominacion" name="x_denominacion" id="x_denominacion" size="30" maxlength="200" placeholder="<?php echo ew_HtmlEncode($_menu->denominacion->getPlaceHolder()) ?>" value="<?php echo $_menu->denominacion->EditValue ?>"<?php echo $_menu->denominacion->EditAttributes() ?>>
-</span>
-<?php echo $_menu->denominacion->CustomMsg ?></div></div>
-	</div>
-<?php } ?>
-<?php if ($_menu->orden->Visible) { // orden ?>
-	<div id="r_orden" class="form-group">
-		<label id="elh__menu_orden" for="x_orden" class="col-sm-2 control-label ewLabel"><?php echo $_menu->orden->FldCaption() ?><?php echo $Language->Phrase("FieldRequiredIndicator") ?></label>
-		<div class="col-sm-10"><div<?php echo $_menu->orden->CellAttributes() ?>>
-<span id="el__menu_orden">
-<input type="text" data-table="_menu" data-field="x_orden" name="x_orden" id="x_orden" size="30" placeholder="<?php echo ew_HtmlEncode($_menu->orden->getPlaceHolder()) ?>" value="<?php echo $_menu->orden->EditValue ?>"<?php echo $_menu->orden->EditAttributes() ?>>
-</span>
-<?php echo $_menu->orden->CustomMsg ?></div></div>
-	</div>
-<?php } ?>
-<?php if ($_menu->imagen->Visible) { // imagen ?>
+<?php if ($slider->imagen->Visible) { // imagen ?>
 	<div id="r_imagen" class="form-group">
-		<label id="elh__menu_imagen" class="col-sm-2 control-label ewLabel"><?php echo $_menu->imagen->FldCaption() ?></label>
-		<div class="col-sm-10"><div<?php echo $_menu->imagen->CellAttributes() ?>>
-<span id="el__menu_imagen">
+		<label id="elh_slider_imagen" class="col-sm-2 control-label ewLabel"><?php echo $slider->imagen->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $slider->imagen->CellAttributes() ?>>
+<span id="el_slider_imagen">
 <div id="fd_x_imagen">
-<span title="<?php echo $_menu->imagen->FldTitle() ? $_menu->imagen->FldTitle() : $Language->Phrase("ChooseFile") ?>" class="btn btn-default btn-sm fileinput-button ewTooltip<?php if ($_menu->imagen->ReadOnly || $_menu->imagen->Disabled) echo " hide"; ?>">
+<span title="<?php echo $slider->imagen->FldTitle() ? $slider->imagen->FldTitle() : $Language->Phrase("ChooseFile") ?>" class="btn btn-default btn-sm fileinput-button ewTooltip<?php if ($slider->imagen->ReadOnly || $slider->imagen->Disabled) echo " hide"; ?>">
 	<span><?php echo $Language->Phrase("ChooseFileBtn") ?></span>
-	<input type="file" title=" " data-table="_menu" data-field="x_imagen" name="x_imagen" id="x_imagen"<?php echo $_menu->imagen->EditAttributes() ?>>
+	<input type="file" title=" " data-table="slider" data-field="x_imagen" name="x_imagen" id="x_imagen"<?php echo $slider->imagen->EditAttributes() ?>>
 </span>
-<input type="hidden" name="fn_x_imagen" id= "fn_x_imagen" value="<?php echo $_menu->imagen->Upload->FileName ?>">
-<?php if (@$_POST["fa_x_imagen"] == "0") { ?>
+<input type="hidden" name="fn_x_imagen" id= "fn_x_imagen" value="<?php echo $slider->imagen->Upload->FileName ?>">
 <input type="hidden" name="fa_x_imagen" id= "fa_x_imagen" value="0">
-<?php } else { ?>
-<input type="hidden" name="fa_x_imagen" id= "fa_x_imagen" value="1">
-<?php } ?>
 <input type="hidden" name="fs_x_imagen" id= "fs_x_imagen" value="255">
-<input type="hidden" name="fx_x_imagen" id= "fx_x_imagen" value="<?php echo $_menu->imagen->UploadAllowedFileExt ?>">
-<input type="hidden" name="fm_x_imagen" id= "fm_x_imagen" value="<?php echo $_menu->imagen->UploadMaxFileSize ?>">
+<input type="hidden" name="fx_x_imagen" id= "fx_x_imagen" value="<?php echo $slider->imagen->UploadAllowedFileExt ?>">
+<input type="hidden" name="fm_x_imagen" id= "fm_x_imagen" value="<?php echo $slider->imagen->UploadMaxFileSize ?>">
 </div>
 <table id="ft_x_imagen" class="table table-condensed pull-left ewUploadTable"><tbody class="files"></tbody></table>
 </span>
-<?php echo $_menu->imagen->CustomMsg ?></div></div>
+<?php echo $slider->imagen->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
-<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-	<div id="r_accesoDirecto" class="form-group">
-		<label id="elh__menu_accesoDirecto" class="col-sm-2 control-label ewLabel"><?php echo $_menu->accesoDirecto->FldCaption() ?></label>
-		<div class="col-sm-10"><div<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
-<span id="el__menu_accesoDirecto">
-<div id="tp_x_accesoDirecto" class="ewTemplate"><input type="radio" data-table="_menu" data-field="x_accesoDirecto" data-value-separator="<?php echo $_menu->accesoDirecto->DisplayValueSeparatorAttribute() ?>" name="x_accesoDirecto" id="x_accesoDirecto" value="{value}"<?php echo $_menu->accesoDirecto->EditAttributes() ?>></div>
-<div id="dsl_x_accesoDirecto" data-repeatcolumn="5" class="ewItemList" style="display: none;"><div>
-<?php echo $_menu->accesoDirecto->RadioButtonListHtml(FALSE, "x_accesoDirecto") ?>
-</div></div>
+<?php if ($slider->informacion->Visible) { // informacion ?>
+	<div id="r_informacion" class="form-group">
+		<label id="elh_slider_informacion" class="col-sm-2 control-label ewLabel"><?php echo $slider->informacion->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $slider->informacion->CellAttributes() ?>>
+<span id="el_slider_informacion">
+<?php ew_AppendClass($slider->informacion->EditAttrs["class"], "editor"); ?>
+<textarea data-table="slider" data-field="x_informacion" name="x_informacion" id="x_informacion" cols="35" rows="4" placeholder="<?php echo ew_HtmlEncode($slider->informacion->getPlaceHolder()) ?>"<?php echo $slider->informacion->EditAttributes() ?>><?php echo $slider->informacion->EditValue ?></textarea>
+<script type="text/javascript">
+ew_CreateEditor("fslideradd", "x_informacion", 35, 4, <?php echo ($slider->informacion->ReadOnly || FALSE) ? "true" : "false" ?>);
+</script>
 </span>
-<?php echo $_menu->accesoDirecto->CustomMsg ?></div></div>
+<?php echo $slider->informacion->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($slider->titulo->Visible) { // titulo ?>
+	<div id="r_titulo" class="form-group">
+		<label id="elh_slider_titulo" for="x_titulo" class="col-sm-2 control-label ewLabel"><?php echo $slider->titulo->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $slider->titulo->CellAttributes() ?>>
+<span id="el_slider_titulo">
+<input type="text" data-table="slider" data-field="x_titulo" name="x_titulo" id="x_titulo" size="30" maxlength="100" placeholder="<?php echo ew_HtmlEncode($slider->titulo->getPlaceHolder()) ?>" value="<?php echo $slider->titulo->EditValue ?>"<?php echo $slider->titulo->EditAttributes() ?>>
+</span>
+<?php echo $slider->titulo->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+	<div id="r_subtitulo" class="form-group">
+		<label id="elh_slider_subtitulo" for="x_subtitulo" class="col-sm-2 control-label ewLabel"><?php echo $slider->subtitulo->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $slider->subtitulo->CellAttributes() ?>>
+<span id="el_slider_subtitulo">
+<input type="text" data-table="slider" data-field="x_subtitulo" name="x_subtitulo" id="x_subtitulo" size="30" maxlength="100" placeholder="<?php echo ew_HtmlEncode($slider->subtitulo->getPlaceHolder()) ?>" value="<?php echo $slider->subtitulo->EditValue ?>"<?php echo $slider->subtitulo->EditAttributes() ?>>
+</span>
+<?php echo $slider->subtitulo->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($slider->link->Visible) { // link ?>
+	<div id="r_link" class="form-group">
+		<label id="elh_slider_link" for="x_link" class="col-sm-2 control-label ewLabel"><?php echo $slider->link->FldCaption() ?></label>
+		<div class="col-sm-10"><div<?php echo $slider->link->CellAttributes() ?>>
+<span id="el_slider_link">
+<input type="text" data-table="slider" data-field="x_link" name="x_link" id="x_link" size="30" maxlength="255" placeholder="<?php echo ew_HtmlEncode($slider->link->getPlaceHolder()) ?>" value="<?php echo $slider->link->EditValue ?>"<?php echo $slider->link->EditAttributes() ?>>
+</span>
+<?php echo $slider->link->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
 </div>
-<input type="hidden" data-table="_menu" data-field="x_id" name="x_id" id="x_id" value="<?php echo ew_HtmlEncode($_menu->id->CurrentValue) ?>">
-<?php if (!$p_menu_edit->IsModal) { ?>
+<?php if (!$slider_add->IsModal) { ?>
 <div class="form-group">
 	<div class="col-sm-offset-2 col-sm-10">
-<button class="btn btn-primary ewButton" name="btnAction" id="btnAction" type="submit"><?php echo $Language->Phrase("SaveBtn") ?></button>
-<button class="btn btn-default ewButton" name="btnCancel" id="btnCancel" type="button" data-href="<?php echo $p_menu_edit->getReturnUrl() ?>"><?php echo $Language->Phrase("CancelBtn") ?></button>
+<button class="btn btn-primary ewButton" name="btnAction" id="btnAction" type="submit"><?php echo $Language->Phrase("AddBtn") ?></button>
+<button class="btn btn-default ewButton" name="btnCancel" id="btnCancel" type="button" data-href="<?php echo $slider_add->getReturnUrl() ?>"><?php echo $Language->Phrase("CancelBtn") ?></button>
 	</div>
 </div>
 <?php } ?>
 </form>
 <script type="text/javascript">
-f_menuedit.Init();
+fslideradd.Init();
 </script>
 <?php
-$p_menu_edit->ShowPageFooter();
+$slider_add->ShowPageFooter();
 if (EW_DEBUG_ENABLED)
 	echo ew_DebugMsg();
 ?>
@@ -1114,5 +1130,5 @@ if (EW_DEBUG_ENABLED)
 </script>
 <?php include_once "footer.php" ?>
 <?php
-$p_menu_edit->Page_Terminate();
+$slider_add->Page_Terminate();
 ?>

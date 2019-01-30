@@ -5,7 +5,7 @@ ob_start(); // Turn on output buffering
 <?php include_once "ewcfg13.php" ?>
 <?php include_once ((EW_USE_ADODB) ? "adodb5/adodb.inc.php" : "ewmysql13.php") ?>
 <?php include_once "phpfn13.php" ?>
-<?php include_once "_menuinfo.php" ?>
+<?php include_once "sliderinfo.php" ?>
 <?php include_once "usuariosinfo.php" ?>
 <?php include_once "userfn13.php" ?>
 <?php
@@ -14,9 +14,9 @@ ob_start(); // Turn on output buffering
 // Page class
 //
 
-$p_menu_view = NULL; // Initialize page object first
+$slider_view = NULL; // Initialize page object first
 
-class cp_menu_view extends c_menu {
+class cslider_view extends cslider {
 
 	// Page ID
 	var $PageID = 'view';
@@ -25,10 +25,10 @@ class cp_menu_view extends c_menu {
 	var $ProjectID = "{B4028305-4D6B-4D03-8DB3-7403E0DBC5D2}";
 
 	// Table name
-	var $TableName = 'menu';
+	var $TableName = 'slider';
 
 	// Page object name
-	var $PageObjName = 'p_menu_view';
+	var $PageObjName = 'slider_view';
 
 	// Page name
 	function PageName() {
@@ -258,10 +258,10 @@ class cp_menu_view extends c_menu {
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (_menu)
-		if (!isset($GLOBALS["_menu"]) || get_class($GLOBALS["_menu"]) == "c_menu") {
-			$GLOBALS["_menu"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["_menu"];
+		// Table object (slider)
+		if (!isset($GLOBALS["slider"]) || get_class($GLOBALS["slider"]) == "cslider") {
+			$GLOBALS["slider"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["slider"];
 		}
 		$KeyUrl = "";
 		if (@$_GET["id"] <> "") {
@@ -285,7 +285,7 @@ class cp_menu_view extends c_menu {
 
 		// Table name (for backward compatibility)
 		if (!defined("EW_TABLE_NAME"))
-			define("EW_TABLE_NAME", 'menu', TRUE);
+			define("EW_TABLE_NAME", 'slider', TRUE);
 
 		// Start timer
 		if (!isset($GLOBALS["gTimer"])) $GLOBALS["gTimer"] = new cTimer();
@@ -329,7 +329,7 @@ class cp_menu_view extends c_menu {
 			$Security->SaveLastUrl();
 			$this->setFailureMessage(ew_DeniedMsg()); // Set no permission
 			if ($Security->CanList())
-				$this->Page_Terminate(ew_GetUrl("_menulist.php"));
+				$this->Page_Terminate(ew_GetUrl("sliderlist.php"));
 			else
 				$this->Page_Terminate(ew_GetUrl("login.php"));
 		}
@@ -339,10 +339,11 @@ class cp_menu_view extends c_menu {
 			$Security->UserID_Loaded();
 		}
 		$this->CurrentAction = (@$_GET["a"] <> "") ? $_GET["a"] : @$_POST["a_list"]; // Set up current action
-		$this->denominacion->SetVisibility();
-		$this->orden->SetVisibility();
 		$this->imagen->SetVisibility();
-		$this->accesoDirecto->SetVisibility();
+		$this->informacion->SetVisibility();
+		$this->titulo->SetVisibility();
+		$this->subtitulo->SetVisibility();
+		$this->link->SetVisibility();
 
 		// Global Page Loading event (in userfn*.php)
 		Page_Loading();
@@ -374,13 +375,13 @@ class cp_menu_view extends c_menu {
 		Page_Unloaded();
 
 		// Export
-		global $EW_EXPORT, $_menu;
+		global $EW_EXPORT, $slider;
 		if ($this->CustomExport <> "" && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EW_EXPORT)) {
 				$sContent = ob_get_contents();
 			if ($gsExportFile == "") $gsExportFile = $this->TableVar;
 			$class = $EW_EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($_menu);
+				$doc = new $class($slider);
 				$doc->Text = $sContent;
 				if ($this->Export == "email")
 					echo $this->ExportEmail($doc->Text);
@@ -450,7 +451,7 @@ class cp_menu_view extends c_menu {
 				$this->id->setFormValue($_POST["id"]);
 				$this->RecKey["id"] = $this->id->FormValue;
 			} else {
-				$sReturnUrl = "_menulist.php"; // Return to list
+				$sReturnUrl = "sliderlist.php"; // Return to list
 			}
 
 			// Get action
@@ -460,11 +461,11 @@ class cp_menu_view extends c_menu {
 					if (!$this->LoadRow()) { // Load record based on key
 						if ($this->getSuccessMessage() == "" && $this->getFailureMessage() == "")
 							$this->setFailureMessage($Language->Phrase("NoRecord")); // Set no record message
-						$sReturnUrl = "_menulist.php"; // No matching record, return to list
+						$sReturnUrl = "sliderlist.php"; // No matching record, return to list
 					}
 			}
 		} else {
-			$sReturnUrl = "_menulist.php"; // Not page request, return to list
+			$sReturnUrl = "sliderlist.php"; // Not page request, return to list
 		}
 		if ($sReturnUrl <> "")
 			$this->Page_Terminate($sReturnUrl);
@@ -498,15 +499,6 @@ class cp_menu_view extends c_menu {
 		else
 			$item->Body = "<a class=\"ewAction ewEdit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . ew_HtmlEncode($this->EditUrl) . "\">" . $Language->Phrase("ViewPageEditLink") . "</a>";
 		$item->Visible = ($this->EditUrl <> "" && $Security->CanEdit());
-
-		// Copy
-		$item = &$option->Add("copy");
-		$copycaption = ew_HtmlTitle($Language->Phrase("ViewPageCopyLink"));
-		if ($this->IsModal) // Modal
-			$item->Body = "<a class=\"ewAction ewCopy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"javascript:void(0);\" onclick=\"ew_ModalDialogShow({lnk:this,url:'" . ew_HtmlEncode($this->CopyUrl) . "',caption:'" . $copycaption . "'});\">" . $Language->Phrase("ViewPageCopyLink") . "</a>";
-		else
-			$item->Body = "<a class=\"ewAction ewCopy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . ew_HtmlEncode($this->CopyUrl) . "\">" . $Language->Phrase("ViewPageCopyLink") . "</a>";
-		$item->Visible = ($this->CopyUrl <> "" && $Security->CanAdd());
 
 		// Delete
 		$item = &$option->Add("delete");
@@ -593,11 +585,12 @@ class cp_menu_view extends c_menu {
 		$row = &$rs->fields;
 		$this->Row_Selected($row);
 		$this->id->setDbValue($rs->fields('id'));
-		$this->denominacion->setDbValue($rs->fields('denominacion'));
-		$this->orden->setDbValue($rs->fields('orden'));
 		$this->imagen->Upload->DbValue = $rs->fields('imagen');
 		$this->imagen->CurrentValue = $this->imagen->Upload->DbValue;
-		$this->accesoDirecto->setDbValue($rs->fields('accesoDirecto'));
+		$this->informacion->setDbValue($rs->fields('informacion'));
+		$this->titulo->setDbValue($rs->fields('titulo'));
+		$this->subtitulo->setDbValue($rs->fields('subtitulo'));
+		$this->link->setDbValue($rs->fields('link'));
 	}
 
 	// Load DbValue from recordset
@@ -605,10 +598,11 @@ class cp_menu_view extends c_menu {
 		if (!$rs || !is_array($rs) && $rs->EOF) return;
 		$row = is_array($rs) ? $rs : $rs->fields;
 		$this->id->DbValue = $row['id'];
-		$this->denominacion->DbValue = $row['denominacion'];
-		$this->orden->DbValue = $row['orden'];
 		$this->imagen->Upload->DbValue = $row['imagen'];
-		$this->accesoDirecto->DbValue = $row['accesoDirecto'];
+		$this->informacion->DbValue = $row['informacion'];
+		$this->titulo->DbValue = $row['titulo'];
+		$this->subtitulo->DbValue = $row['subtitulo'];
+		$this->link->DbValue = $row['link'];
 	}
 
 	// Render row values based on field settings
@@ -623,29 +617,18 @@ class cp_menu_view extends c_menu {
 		$this->ListUrl = $this->GetListUrl();
 		$this->SetupOtherOptions();
 
-		// Convert decimal values if posted back
-		if ($this->orden->FormValue == $this->orden->CurrentValue && is_numeric(ew_StrToFloat($this->orden->CurrentValue)))
-			$this->orden->CurrentValue = ew_StrToFloat($this->orden->CurrentValue);
-
 		// Call Row_Rendering event
 		$this->Row_Rendering();
 
 		// Common render codes for all row types
 		// id
-		// denominacion
-		// orden
 		// imagen
-		// accesoDirecto
+		// informacion
+		// titulo
+		// subtitulo
+		// link
 
 		if ($this->RowType == EW_ROWTYPE_VIEW) { // View row
-
-		// denominacion
-		$this->denominacion->ViewValue = $this->denominacion->CurrentValue;
-		$this->denominacion->ViewCustomAttributes = "";
-
-		// orden
-		$this->orden->ViewValue = $this->orden->CurrentValue;
-		$this->orden->ViewCustomAttributes = "";
 
 		// imagen
 		if (!ew_Empty($this->imagen->Upload->DbValue)) {
@@ -655,23 +638,21 @@ class cp_menu_view extends c_menu {
 		}
 		$this->imagen->ViewCustomAttributes = "";
 
-		// accesoDirecto
-		if (strval($this->accesoDirecto->CurrentValue) <> "") {
-			$this->accesoDirecto->ViewValue = $this->accesoDirecto->OptionCaption($this->accesoDirecto->CurrentValue);
-		} else {
-			$this->accesoDirecto->ViewValue = NULL;
-		}
-		$this->accesoDirecto->ViewCustomAttributes = "";
+		// informacion
+		$this->informacion->ViewValue = $this->informacion->CurrentValue;
+		$this->informacion->ViewCustomAttributes = "";
 
-			// denominacion
-			$this->denominacion->LinkCustomAttributes = "";
-			$this->denominacion->HrefValue = "";
-			$this->denominacion->TooltipValue = "";
+		// titulo
+		$this->titulo->ViewValue = $this->titulo->CurrentValue;
+		$this->titulo->ViewCustomAttributes = "";
 
-			// orden
-			$this->orden->LinkCustomAttributes = "";
-			$this->orden->HrefValue = "";
-			$this->orden->TooltipValue = "";
+		// subtitulo
+		$this->subtitulo->ViewValue = $this->subtitulo->CurrentValue;
+		$this->subtitulo->ViewCustomAttributes = "";
+
+		// link
+		$this->link->ViewValue = $this->link->CurrentValue;
+		$this->link->ViewCustomAttributes = "";
 
 			// imagen
 			$this->imagen->LinkCustomAttributes = "";
@@ -679,10 +660,25 @@ class cp_menu_view extends c_menu {
 			$this->imagen->HrefValue2 = $this->imagen->UploadPath . $this->imagen->Upload->DbValue;
 			$this->imagen->TooltipValue = "";
 
-			// accesoDirecto
-			$this->accesoDirecto->LinkCustomAttributes = "";
-			$this->accesoDirecto->HrefValue = "";
-			$this->accesoDirecto->TooltipValue = "";
+			// informacion
+			$this->informacion->LinkCustomAttributes = "";
+			$this->informacion->HrefValue = "";
+			$this->informacion->TooltipValue = "";
+
+			// titulo
+			$this->titulo->LinkCustomAttributes = "";
+			$this->titulo->HrefValue = "";
+			$this->titulo->TooltipValue = "";
+
+			// subtitulo
+			$this->subtitulo->LinkCustomAttributes = "";
+			$this->subtitulo->HrefValue = "";
+			$this->subtitulo->TooltipValue = "";
+
+			// link
+			$this->link->LinkCustomAttributes = "";
+			$this->link->HrefValue = "";
+			$this->link->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -695,7 +691,7 @@ class cp_menu_view extends c_menu {
 		global $Breadcrumb, $Language;
 		$Breadcrumb = new cBreadcrumb();
 		$url = substr(ew_CurrentUrl(), strrpos(ew_CurrentUrl(), "/")+1);
-		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("_menulist.php"), "", $this->TableVar, TRUE);
+		$Breadcrumb->Add("list", $this->TableVar, $this->AddMasterUrl("sliderlist.php"), "", $this->TableVar, TRUE);
 		$PageId = "view";
 		$Breadcrumb->Add("view", $PageId, $url);
 	}
@@ -807,29 +803,29 @@ class cp_menu_view extends c_menu {
 <?php
 
 // Create page object
-if (!isset($p_menu_view)) $p_menu_view = new cp_menu_view();
+if (!isset($slider_view)) $slider_view = new cslider_view();
 
 // Page init
-$p_menu_view->Page_Init();
+$slider_view->Page_Init();
 
 // Page main
-$p_menu_view->Page_Main();
+$slider_view->Page_Main();
 
 // Global Page Rendering event (in userfn*.php)
 Page_Rendering();
 
 // Page Rendering event
-$p_menu_view->Page_Render();
+$slider_view->Page_Render();
 ?>
 <?php include_once "header.php" ?>
 <script type="text/javascript">
 
 // Form object
 var CurrentPageID = EW_PAGE_ID = "view";
-var CurrentForm = f_menuview = new ew_Form("f_menuview", "view");
+var CurrentForm = fsliderview = new ew_Form("fsliderview", "view");
 
 // Form_CustomValidate event
-f_menuview.Form_CustomValidate = 
+fsliderview.Form_CustomValidate = 
  function(fobj) { // DO NOT CHANGE THIS LINE!
 
  	// Your custom validation code here, return false if invalid. 
@@ -838,89 +834,98 @@ f_menuview.Form_CustomValidate =
 
 // Use JavaScript validation or not
 <?php if (EW_CLIENT_VALIDATE) { ?>
-f_menuview.ValidateRequired = true;
+fsliderview.ValidateRequired = true;
 <?php } else { ?>
-f_menuview.ValidateRequired = false; 
+fsliderview.ValidateRequired = false; 
 <?php } ?>
 
 // Dynamic selection lists
-f_menuview.Lists["x_accesoDirecto"] = {"LinkField":"","Ajax":null,"AutoFill":false,"DisplayFields":["","","",""],"ParentFields":[],"ChildFields":[],"FilterFields":[],"Options":[],"Template":""};
-f_menuview.Lists["x_accesoDirecto"].Options = <?php echo json_encode($_menu->accesoDirecto->Options()) ?>;
-
 // Form object for search
+
 </script>
 <script type="text/javascript">
 
 // Write your client script here, no need to add script tags.
 </script>
 <div class="ewToolbar">
-<?php if (!$p_menu_view->IsModal) { ?>
+<?php if (!$slider_view->IsModal) { ?>
 <?php $Breadcrumb->Render(); ?>
 <?php } ?>
-<?php $p_menu_view->ExportOptions->Render("body") ?>
+<?php $slider_view->ExportOptions->Render("body") ?>
 <?php
-	foreach ($p_menu_view->OtherOptions as &$option)
+	foreach ($slider_view->OtherOptions as &$option)
 		$option->Render("body");
 ?>
-<?php if (!$p_menu_view->IsModal) { ?>
+<?php if (!$slider_view->IsModal) { ?>
 <?php echo $Language->SelectionForm(); ?>
 <?php } ?>
 <div class="clearfix"></div>
 </div>
-<?php $p_menu_view->ShowPageHeader(); ?>
+<?php $slider_view->ShowPageHeader(); ?>
 <?php
-$p_menu_view->ShowMessage();
+$slider_view->ShowMessage();
 ?>
-<form name="f_menuview" id="f_menuview" class="form-inline ewForm ewViewForm" action="<?php echo ew_CurrentPage() ?>" method="post">
-<?php if ($p_menu_view->CheckToken) { ?>
-<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $p_menu_view->Token ?>">
+<form name="fsliderview" id="fsliderview" class="form-inline ewForm ewViewForm" action="<?php echo ew_CurrentPage() ?>" method="post">
+<?php if ($slider_view->CheckToken) { ?>
+<input type="hidden" name="<?php echo EW_TOKEN_NAME ?>" value="<?php echo $slider_view->Token ?>">
 <?php } ?>
-<input type="hidden" name="t" value="_menu">
-<?php if ($p_menu_view->IsModal) { ?>
+<input type="hidden" name="t" value="slider">
+<?php if ($slider_view->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
 <table class="table table-bordered table-striped ewViewTable">
-<?php if ($_menu->denominacion->Visible) { // denominacion ?>
-	<tr id="r_denominacion">
-		<td><span id="elh__menu_denominacion"><?php echo $_menu->denominacion->FldCaption() ?></span></td>
-		<td data-name="denominacion"<?php echo $_menu->denominacion->CellAttributes() ?>>
-<span id="el__menu_denominacion">
-<span<?php echo $_menu->denominacion->ViewAttributes() ?>>
-<?php echo $_menu->denominacion->ViewValue ?></span>
-</span>
-</td>
-	</tr>
-<?php } ?>
-<?php if ($_menu->orden->Visible) { // orden ?>
-	<tr id="r_orden">
-		<td><span id="elh__menu_orden"><?php echo $_menu->orden->FldCaption() ?></span></td>
-		<td data-name="orden"<?php echo $_menu->orden->CellAttributes() ?>>
-<span id="el__menu_orden">
-<span<?php echo $_menu->orden->ViewAttributes() ?>>
-<?php echo $_menu->orden->ViewValue ?></span>
-</span>
-</td>
-	</tr>
-<?php } ?>
-<?php if ($_menu->imagen->Visible) { // imagen ?>
+<?php if ($slider->imagen->Visible) { // imagen ?>
 	<tr id="r_imagen">
-		<td><span id="elh__menu_imagen"><?php echo $_menu->imagen->FldCaption() ?></span></td>
-		<td data-name="imagen"<?php echo $_menu->imagen->CellAttributes() ?>>
-<span id="el__menu_imagen">
-<span<?php echo $_menu->imagen->ViewAttributes() ?>>
-<?php echo ew_GetFileViewTag($_menu->imagen, $_menu->imagen->ViewValue) ?>
+		<td><span id="elh_slider_imagen"><?php echo $slider->imagen->FldCaption() ?></span></td>
+		<td data-name="imagen"<?php echo $slider->imagen->CellAttributes() ?>>
+<span id="el_slider_imagen">
+<span<?php echo $slider->imagen->ViewAttributes() ?>>
+<?php echo ew_GetFileViewTag($slider->imagen, $slider->imagen->ViewValue) ?>
 </span>
 </span>
 </td>
 	</tr>
 <?php } ?>
-<?php if ($_menu->accesoDirecto->Visible) { // accesoDirecto ?>
-	<tr id="r_accesoDirecto">
-		<td><span id="elh__menu_accesoDirecto"><?php echo $_menu->accesoDirecto->FldCaption() ?></span></td>
-		<td data-name="accesoDirecto"<?php echo $_menu->accesoDirecto->CellAttributes() ?>>
-<span id="el__menu_accesoDirecto">
-<span<?php echo $_menu->accesoDirecto->ViewAttributes() ?>>
-<?php echo $_menu->accesoDirecto->ViewValue ?></span>
+<?php if ($slider->informacion->Visible) { // informacion ?>
+	<tr id="r_informacion">
+		<td><span id="elh_slider_informacion"><?php echo $slider->informacion->FldCaption() ?></span></td>
+		<td data-name="informacion"<?php echo $slider->informacion->CellAttributes() ?>>
+<span id="el_slider_informacion">
+<span<?php echo $slider->informacion->ViewAttributes() ?>>
+<?php echo $slider->informacion->ViewValue ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($slider->titulo->Visible) { // titulo ?>
+	<tr id="r_titulo">
+		<td><span id="elh_slider_titulo"><?php echo $slider->titulo->FldCaption() ?></span></td>
+		<td data-name="titulo"<?php echo $slider->titulo->CellAttributes() ?>>
+<span id="el_slider_titulo">
+<span<?php echo $slider->titulo->ViewAttributes() ?>>
+<?php echo $slider->titulo->ViewValue ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($slider->subtitulo->Visible) { // subtitulo ?>
+	<tr id="r_subtitulo">
+		<td><span id="elh_slider_subtitulo"><?php echo $slider->subtitulo->FldCaption() ?></span></td>
+		<td data-name="subtitulo"<?php echo $slider->subtitulo->CellAttributes() ?>>
+<span id="el_slider_subtitulo">
+<span<?php echo $slider->subtitulo->ViewAttributes() ?>>
+<?php echo $slider->subtitulo->ViewValue ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($slider->link->Visible) { // link ?>
+	<tr id="r_link">
+		<td><span id="elh_slider_link"><?php echo $slider->link->FldCaption() ?></span></td>
+		<td data-name="link"<?php echo $slider->link->CellAttributes() ?>>
+<span id="el_slider_link">
+<span<?php echo $slider->link->ViewAttributes() ?>>
+<?php echo $slider->link->ViewValue ?></span>
 </span>
 </td>
 	</tr>
@@ -928,10 +933,10 @@ $p_menu_view->ShowMessage();
 </table>
 </form>
 <script type="text/javascript">
-f_menuview.Init();
+fsliderview.Init();
 </script>
 <?php
-$p_menu_view->ShowPageFooter();
+$slider_view->ShowPageFooter();
 if (EW_DEBUG_ENABLED)
 	echo ew_DebugMsg();
 ?>
@@ -943,5 +948,5 @@ if (EW_DEBUG_ENABLED)
 </script>
 <?php include_once "footer.php" ?>
 <?php
-$p_menu_view->Page_Terminate();
+$slider_view->Page_Terminate();
 ?>
