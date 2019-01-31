@@ -60,7 +60,7 @@ $entradas = obtenerEntradasBlog($_GET["id"]);
               foreach ($entradas as $key => $value) {
                 ?>
 
-                  <div class="row">
+                  <div class="row mb-5">
 
                     <?php 
 

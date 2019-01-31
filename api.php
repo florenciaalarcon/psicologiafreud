@@ -58,14 +58,14 @@ function ultimasEntradas(){
       		?>
 			      <div class="row my-3">
 
-			        <div class="col-md-3">
+			        <div class="col-lg-3 mb-1">
 			          <div class="bg-rojo">
 			            <h6 class="cl-blanco text-center display-5"><?php echo date('d', strtotime($value["fechaModificacion"])) ?></h6>
 			            <h6 class="cl-blanco text-center bold text-uppercase my-0"><?php echo  substr($MESES[date('n', strtotime($value["fechaModificacion"]))-1],0,3) ?></h6>
 			          </div>
 			        </div>
 
-			        <div class="col-md-9">
+			        <div class="col-lg-9">
 			          <h5 class="cl-azul bold"><a class="cl-azul" href="entradablog.php?id=<?php echo $value["id"] ?>"><?php echo $value["titulo"] ?></a></h5>
 			        </div>
 
