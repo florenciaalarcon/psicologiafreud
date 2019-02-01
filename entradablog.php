@@ -52,7 +52,7 @@ if (count($contenido) == 0) {
           <?php 
             if ($contenido[0]["imagenPrincipal"] != NULL) {
               ?>
-                <img width:"100%" src="backend/uploads/<?php echo $contenido[0]["imagenPrincipal"] ?>" alt="">
+                <img width="100%" src="backend/uploads/<?php echo $contenido[0]["imagenPrincipal"] ?>" alt="">
               
               <?php
             }
