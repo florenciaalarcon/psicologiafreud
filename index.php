@@ -2,6 +2,17 @@
 
 include_once("api.php");
 
+if (isset($_POST["contacto-submit"])) {
+  $para      = 'leandromusso@gmail.com';
+  $titulo    = 'Nuevo Contacto desde nuestro sitio web';
+  $mensaje   = 'Nombre: '.$_POST["contacto-nombre"].' Mensaje: '.$_POST["contacto-mensaje"];
+  $cabeceras = 'From: '.$_POST["contacto-email"] . "\r\n" .
+      'Reply-To: '.$_POST["contacto-email"] . "\r\n" .
+      'X-Mailer: PHP/' . phpversion();
+
+  mail($para, $titulo, $mensaje, $cabeceras);  
+}
+
  ?>
 
 <!DOCTYPE html>
@@ -82,44 +93,7 @@ include_once("api.php");
 
     <!-- circulos -->
 
-  <section class="m-3 py-5">
-    <div class="row">
-      <div class="col-8 offset-2">
-        <div class="row">
-          <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Construcción de los conceptos psicoanalíticos</a></h3>
-          </div>
-            <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Información Académica</a></h3>
-          </div>
-            <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Extensión</a></h3>
-          </div>
-            <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Referencias a la obra de Freud</a></h3>
-          </div>
-            <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Conexiones</a></h3>
-          </div>
-            <div class="col-lg-4 col-sm-6 text-center mb-4">
-            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="">Agenda</a></h3>
-          </div>
-        </div>
-      </div>  
-    </div>
-  </section>
+    <?php accesosDirectos() ?>
 
 
   <!-- fin circulos -->
@@ -138,59 +112,7 @@ include_once("api.php");
 
   <!-- blog -->
 
-  <section class="py-5">
-    <h2 class="cl-azul text-center display-4 bold mb-5">Blog</h2>
-      <div class="container">
-        <div class="row">
-          <div class="col-md-4 cuadricula">
-            <div class="inner-cuadricula" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-              <div class="row mt-3 titulo-blog">
-                <div class="col-md-3">
-                  <div class="bg-rojo py-1">
-                    <h5 class="cl-blanco text-center display-5">10</h5>
-                    <h5 class="cl-blanco text-center bold text-uppercase my-0">ene</h5>
-                  </div>
-                </div>
-                <div class="col-md-9">
-                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
-                </div>
-              </div>
-          </div>
-          <div class="col-md-4 cuadricula">
-            <div class="inner-cuadricula" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-              <div class="row mt-3 titulo-blog">
-                <div class="col-md-3">
-                  <div class="bg-rojo py-1">
-                    <h5 class="cl-blanco text-center display-5">10</h5>
-                    <h5 class="cl-blanco text-center bold text-uppercase my-0">ene</h5>
-                  </div>
-                </div>
-                <div class="col-md-9">
-                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
-                </div>
-              </div>
-          </div>
-          <div class="col-md-4 cuadricula">
-            <div class="inner-cuadricula" style="background-image:url('img/imagen-muestra.jpg')">
-            </div>
-              <div class="row mt-3 titulo-blog">
-                <div class="col-md-3">
-                  <div class="bg-rojo py-1">
-                    <h5 class="cl-blanco text-center display-5">10</h5>
-                    <h5 class="cl-blanco text-center bold text-uppercase my-0">ene</h5>
-                  </div>
-                </div>
-                <div class="col-md-9">
-                  <h3 class="cl-azul"><a class="cl-azul" href="">Título de la noticia</a></h3>
-                </div>
-              </div>
-          </div>
-          
-        </div>  
-      </div>
-  </section>
+  <?php ultimasEntradasHome() ?>
 
   <!-- fin blog -->
 
@@ -206,25 +128,25 @@ include_once("api.php");
             <!-- Text input-->
             <div class="col-md-6">
               <div class="form-group">
-                <input id="textinput" name="textinput" type="text" placeholder="Nombre" class="form-control input-md"> 
+                <input id="contacto-nombre" name="contacto-nombre" type="text" placeholder="Nombre" class="form-control input-md"> 
               </div>
             </div>
 
             <!-- Text input-->
             <div class="col-md-6">
               <div class="form-group">
-                <input id="textinput" name="textinput" type="text" placeholder="Email" class="form-control input-md"> 
+                <input id="contacto-email" name="contacto-email" type="text" placeholder="Email" class="form-control input-md"> 
               </div>
             </div>
           </div>
 
           <!-- Textarea -->
           <div class="form-group">
-            <textarea class="form-control" id="textarea" name="textarea" placeholder="Mensaje"></textarea>
+            <textarea class="form-control" id="contacto-mensaje" name="contacto-mensaje" placeholder="Mensaje"></textarea>
           </div>
 
           <div class="form-group btn-azul text-center">
-            <input type="submit" class="btn bg-azul cl-blanco">
+            <input id="contacto-submit" name="contacto-submit" type="submit" class="btn bg-azul cl-blanco">
           </div>
         </fieldset>
       </form>
@@ -256,5 +178,11 @@ include_once("api.php");
 </body>
 
   <?php scripts() ?>
+
+<script>
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+</script>  
 
 </html>

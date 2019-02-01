@@ -42,6 +42,58 @@ function fecha($fecha){
 	return date('d', strtotime($fecha))." de ".$MESES[date('n', strtotime($fecha))-1]." del ".date('Y', strtotime($fecha));
 }
 
+function accesosDirectos(){
+
+	$contenido = obtenerAccesosDirectos();
+
+	?>
+
+	  <section class="m-3 py-5">
+    <div class="row">
+      <div class="col-8 offset-2">
+        <div class="row">
+
+      <?php 
+
+      	foreach ($contenido as $key => $value) {
+      		?>
+
+	          <div class="col-lg-4 col-sm-6 text-center mb-4">
+	          	<?php 
+
+	          		if ($value["imagen"] != "") {
+	          			?>
+				            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
+				            </div>
+	          			
+	          			<?php 
+	          		}else{
+	          			?>
+				            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5 bg-azul">
+				            </div>
+
+	          			<?php
+	          		}
+
+	          	 ?>
+	            <h3 class="text-center"><a class="cl-azul titulo-circulo" href="menu.php?id=<?php echo $value["id"] ?>"><?php echo $value["denominacion"] ?></a></h3>
+	          </div>
+      		
+      		<?php
+      	}
+
+      ?>        	
+
+        </div>
+      </div>  
+    </div>
+  </section>
+
+	<?php
+}
+
+/*******************************************************************/
+
 function ultimasEntradas(){
 
 	global $MESES;	
@@ -77,6 +129,66 @@ function ultimasEntradas(){
       	}
 
       ?>
+
+	<?php
+}
+
+/*******************************************************************/
+
+function ultimasEntradasHome(){
+
+	global $MESES;	
+
+	$ult = obtenerUltimasEntradas();
+
+	?>
+
+	  <section class="py-5">
+    <h2 class="cl-azul text-center display-4 bold mb-5">Blog</h2>
+      <div class="container">      	
+        <div class="row">
+
+		      <?php 
+
+		      	foreach ($ult as $key => $value) {
+		      		?>
+
+		          <div class="col-md-4 cuadricula">
+		          	<?php 
+		          		if ($value["imagenPrincipal"] != "") {
+		          			?>
+		            			<div class="inner-cuadricula" style="background-image:url('backend/uploads/<?php echo $value["imagenPrincipal"] ?>')">
+		          			<?php
+		          		}else{
+		          			?>
+		            			<div class="inner-cuadricula bg-azul">
+		          			<?php		          			
+		          		}
+		          	 ?>
+		            </div>
+		              <div class="row mt-3 titulo-blog">
+		                <div class="col-md-3">
+		                  <div class="bg-rojo py-1">
+		                    <h5 class="cl-blanco text-center display-5"><?php echo date('d', strtotime($value["fechaModificacion"])) ?></h5>
+		                    <h5 class="cl-blanco text-center bold text-uppercase my-0"><?php echo  substr($MESES[date('n', strtotime($value["fechaModificacion"]))-1],0,3) ?></h5>
+		                  </div>
+		                </div>
+		                <div class="col-md-9">
+		                  <h3 class="cl-azul"><a class="cl-azul" href="entradablog.php?id=<?php echo $value["id"] ?>"><?php echo $value["titulo"] ?></a></h3>
+		                </div>
+		              </div>
+		          </div>
+		      		
+		      		<?php
+		      	}
+
+		      ?>
+
+          
+        </div>  
+      </div>
+  </section>
+
 
 	<?php
 }
@@ -355,6 +467,15 @@ function obtenerItemsMenu($idmenu){
 }
 
 /*******************************************************************/
+
+function obtenerAccesosDirectos(){
+
+	$sql = "SELECT * FROM menu WHERE menu.accesoDirecto = 1";
+
+	return consulta($sql);	
+}
+/*******************************************************************/
+
 
 function obtenerUltimasEntradas(){
 
