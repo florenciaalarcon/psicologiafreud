@@ -63,7 +63,7 @@ function accesosDirectos(){
 
 	          		if ($value["imagen"] != "") {
 	          			?>
-				            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('img/imagen-muestra.jpg')">
+				            <div class="inner-cuadricula rounded-circle img-fluid d-block mx-5" style="background-image:url('backend/uploads/<?php echo $value["imagen"] ?>')">
 				            </div>
 	          			
 	          			<?php 
@@ -293,9 +293,9 @@ function footer(){
         <div class="col-md-6">
           <ul class="list-unstyled cl-blanco">
             <li class="bold">Responsables Página Web</li>
-            <li>Susi Epsztein y Verónica Wainszelbaum</li>
+            <li>Susi Epsztein, Verónica Wainszelbaum y Gerardo Battista</li>
             <li class="bold">Colaboran</li>
-            <li>Federico Giachetti, Liliana Mariño, Celeste Silanes y Noelia Sabelli</li>
+            <li>Federico Giachetti, Liliana Mariño, Celeste Silanes, Noelia Sabelli, Santiago Hormanstorfer (Responsable de Contenidos), Julián Pilar, Gisela Contino y Bettina Quiroga.</li>
           </ul>
         </div>
         <div class="col-md-6">
