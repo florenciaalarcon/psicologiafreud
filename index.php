@@ -3,7 +3,7 @@
 include_once("api.php");
 
 if (isset($_POST["contacto-submit"])) {
-  $para      = 'leandromusso@gmail.com';
+  $para      = 'freudI@psi.uba.ar';
   $titulo    = 'Nuevo Contacto desde nuestro sitio web';
   $mensaje   = 'Nombre: '.$_POST["contacto-nombre"].' Mensaje: '.$_POST["contacto-mensaje"];
   $cabeceras = 'From: '.$_POST["contacto-email"] . "\r\n" .
@@ -99,7 +99,7 @@ if (isset($_POST["contacto-submit"])) {
   <!-- fin circulos -->
 
   <!-- llamado -->
-
+<!--
   <section class="bg-azul py-5">
     <div class="container">
       <h3 class="cl-blanco text-center display-3 bold">Título</h3>
@@ -107,7 +107,7 @@ if (isset($_POST["contacto-submit"])) {
       Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore aliquid eaque quasi sint cumque nam magnam accusamus excepturi beatae et officiis, adipisci debitis, omnis, aperiam deleniti obcaecati tempora labore. Recusandae.</p>
     </div>
   </section>
-
+-->
   <!-- fin llamado -->
 
   <!-- blog -->
